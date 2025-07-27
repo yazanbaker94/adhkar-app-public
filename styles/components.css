@@ -91,11 +91,6 @@
     #videoPreviewContainer.orientation-portrait {
         max-width: 400px;
     }
-    
-    /* Square - limit width */
-    #videoPreviewContainer.orientation-square {
-        max-width: 450px;
-    }
 }
 
 /* Large desktop - even more constraints */
@@ -103,11 +98,6 @@
     /* Portrait - slightly larger but still constrained */
     #videoPreviewContainer.orientation-portrait {
         max-width: 450px;
-    }
-    
-    /* Square - slightly larger */
-    #videoPreviewContainer.orientation-square {
-        max-width: 500px;
     }
 }
 

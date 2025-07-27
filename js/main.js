@@ -133,7 +133,7 @@
       const adhkar = [];
       let current = 0;
       let filteredAdhkar = [];
-let currentLang = 'ar';
+let currentLang = 'en';
 let currentCity = "Amman";
 
 // Prayer time format preference
@@ -938,21 +938,26 @@ let scrollTimeout = null;
            const savedLang = localStorage.getItem('preferredLanguage');
            if (savedLang && (savedLang === 'ar' || savedLang === 'en')) {
                currentLang = savedLang;
-               tafsirLang = currentLang;
-               document.documentElement.lang = currentLang;
-               document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
-               
-               // Set initial search input placeholder
-               const searchInput = document.getElementById('quranSearchInput');
-               if (searchInput) {
-                   searchInput.placeholder = currentLang === 'ar' ? 'البحث في القرآن' : 'Search Quran';
-               }
-               
-               // Set initial surah search input placeholder
-               const surahSearchInput = document.getElementById('surahSearchInput');
-               if (surahSearchInput) {
-                   surahSearchInput.placeholder = currentLang === 'ar' ? 'ابحث عن السورة...' : 'Search surah...';
-               }
+           } else {
+               // First-time visitor: save default language (English) to localStorage
+               currentLang = 'en';
+               localStorage.setItem('preferredLanguage', currentLang);
+           }
+           
+           tafsirLang = currentLang;
+           document.documentElement.lang = currentLang;
+           document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+           
+           // Set initial search input placeholder
+           const searchInput = document.getElementById('quranSearchInput');
+           if (searchInput) {
+               searchInput.placeholder = currentLang === 'ar' ? 'البحث في القرآن' : 'Search Quran';
+           }
+           
+           // Set initial surah search input placeholder
+           const surahSearchInput = document.getElementById('surahSearchInput');
+           if (surahSearchInput) {
+               surahSearchInput.placeholder = currentLang === 'ar' ? 'ابحث عن السورة...' : 'Search surah...';
            }
        }
 
@@ -2908,6 +2913,17 @@ function showARUnsupported(errorType) {
           const searchInput = document.getElementById('quranSearchInput');
           if (searchInput) {
               searchInput.placeholder = currentLang === 'ar' ? 'البحث في القرآن' : 'Search Quran';
+          }
+          
+          // Update share dropdown text
+          const shareVerseText = document.getElementById('shareVerseText');
+          if (shareVerseText) {
+              shareVerseText.textContent = currentLang === 'ar' ? 'مشاركة الآية' : 'Share Verse';
+          }
+          
+          const generateVideoText = document.getElementById('generateVideoText');
+          if (generateVideoText) {
+              generateVideoText.textContent = currentLang === 'ar' ? 'إنشاء فيديو' : 'Generate Video';
           }
           
           // Update surah search input placeholder
@@ -8923,15 +8939,122 @@ window.switchLanguage = function() {
     if (popoverSurah !== null && popoverAyah !== null) bookmarkAyah(popoverSurah, popoverAyah);
     closePopover();
   };
-  document.getElementById('ayahMenuShare').onclick = function() {
+  document.getElementById('ayahMenuShare').onclick = function(e) {
+    e.stopPropagation();
+    const dropdown = document.getElementById('shareDropdown');
+    const isVisible = !dropdown.classList.contains('hidden');
+    
+    // Hide dropdown if visible, show if hidden
+    if (isVisible) {
+      dropdown.classList.add('hidden');
+    } else {
+      dropdown.classList.remove('hidden');
+    }
+  };
+
+  // Handle Share Verse option
+  document.getElementById('shareVerseOption').onclick = function(e) {
+    e.stopPropagation();
     if (popoverSurah !== null && popoverAyah !== null) {
       const shareURL = `${window.location.origin}${window.location.pathname}#quran/${popoverSurah + 1}/${popoverAyah + 1}`;
       const surahName = quranData[popoverSurah].name;
       shareVerse(shareURL, surahName, popoverAyah + 1);
     }
+    document.getElementById('shareDropdown').classList.add('hidden');
+    closePopover();
+  };
+
+  // Handle Generate Video option
+  document.getElementById('generateVideoOption').onclick = function(e) {
+    e.stopPropagation();
+    if (popoverSurah !== null && popoverAyah !== null) {
+      // Store the values to set after initialization
+      window.pendingVideoSelection = {
+        surah: popoverSurah + 1,
+        verse: popoverAyah + 1
+      };
+      
+      // Switch to video tab
+      switchTab('video');
+      
+      // Set the surah and verse in video generator with longer delay
+      setTimeout(() => {
+        if (window.pendingVideoSelection) {
+          setVideoSurahAndVerse(window.pendingVideoSelection.surah, window.pendingVideoSelection.verse);
+          window.pendingVideoSelection = null; // Clear the pending selection
+        }
+      }, 500); // Longer delay to ensure all initialization is complete
+    }
+    document.getElementById('shareDropdown').classList.add('hidden');
     closePopover();
   };
 })();
+
+// Function to set surah and verse in video generator
+function setVideoSurahAndVerse(surahNumber, verseNumber) {
+  console.log('🎬 Setting video generator with surah:', surahNumber, 'verse:', verseNumber);
+  console.log('🔍 Current global variables before setting:', { selectedVideoSurah, selectedVideoAyah });
+  
+  // Set the surah dropdown
+  const surahSelect = document.getElementById('videoSurahSelect');
+  if (surahSelect) {
+    // First set the global variables
+    selectedVideoSurah = surahNumber;
+    selectedVideoAyah = verseNumber;
+    
+    console.log('📝 Set global variables to:', { selectedVideoSurah, selectedVideoAyah });
+    
+    // Set the surah dropdown value
+    surahSelect.value = surahNumber;
+    console.log('📋 Set surah dropdown value to:', surahNumber);
+    
+    // Load the ayahs for this surah
+    loadVideoAyahs(surahNumber);
+    console.log('🔄 Called loadVideoAyahs for surah:', surahNumber);
+    
+    // Wait for ayahs to load, then set the verse
+    setTimeout(() => {
+      console.log('⏰ Timeout executed, checking ayah dropdown...');
+      const ayahSelect = document.getElementById('videoAyahSelect');
+      if (ayahSelect) {
+        console.log('📋 Found ayah dropdown, setting value to:', verseNumber);
+        
+        // Set the ayah dropdown value
+        ayahSelect.value = verseNumber;
+        
+        // Make sure the global variable is still set correctly (in case something reset it)
+        selectedVideoAyah = verseNumber;
+        selectedVideoAyahTo = null; // Reset range
+        
+        console.log('🔧 Final global variables:', { selectedVideoSurah, selectedVideoAyah });
+        
+        // Update the "to verse" dropdown options
+        updateAyahToDropdown();
+        
+        // Update the verse display and preview
+        updateSelectedVerse();
+        updateVideoPreview();
+        
+        console.log('✅ Video generator populated with surah:', surahNumber, 'verse:', verseNumber);
+        console.log('✅ Final check - Global variables:', { selectedVideoSurah, selectedVideoAyah });
+      } else {
+        console.error('❌ Ayah select element not found');
+      }
+    }, 400); // Increased timeout even more
+  } else {
+    console.error('❌ Surah select element not found');
+  }
+}
+
+// Close share dropdown when clicking outside
+document.addEventListener('click', function(e) {
+  const shareDropdown = document.getElementById('shareDropdown');
+  const shareButton = document.getElementById('ayahMenuShare');
+  
+  if (shareDropdown && !shareDropdown.contains(e.target) && !shareButton.contains(e.target)) {
+    shareDropdown.classList.add('hidden');
+  }
+});
 
 // Add tafsir modal functions
 let currentTafsirSurah = null;
@@ -11272,6 +11395,11 @@ function loadPrayerOffsets() {
             return;
         }
         
+        // Check if there's a pending video selection
+        if (window.pendingVideoSelection) {
+            console.log('🎯 Pending video selection detected:', window.pendingVideoSelection);
+        }
+        
         console.log('Initializing video generator...');
         console.log('Current Quran data status:', !!quranData);
         console.log('Current translation data status:', !!translationData);
@@ -11331,8 +11459,8 @@ function loadPrayerOffsets() {
     async function loadVideoReciters() {
         console.log('loadVideoReciters: Starting...');
         try {
-            console.log('loadVideoReciters: Fetching from https://adkar.zeabur.app/api/reciters...');
-            const response = await fetch('https://adkar.zeabur.app/api/reciters');
+            console.log('loadVideoReciters: Fetching from http://localhost:3000/api/reciters...');
+            const response = await fetch('http://localhost:3000/api/reciters');
             console.log('loadVideoReciters: Response status:', response.status);
             const reciters = await response.json();
             console.log('loadVideoReciters: Received reciters:', reciters);
@@ -11382,7 +11510,7 @@ function loadPrayerOffsets() {
     async function loadVideoFonts() {
         try {
             console.log('loadVideoFonts: Starting...');
-            const response = await fetch('https://adkar.zeabur.app/api/fonts');
+            const response = await fetch('http://localhost:3000/api/fonts');
             console.log('loadVideoFonts: Response status:', response.status);
             const fonts = await response.json();
             console.log('loadVideoFonts: Received fonts:', fonts);
@@ -11468,10 +11596,6 @@ function loadPrayerOffsets() {
                     previewText = currentLang === 'ar' ? 'عمودي - 1080x1920' : 'Portrait - 1080x1920';
                     aspectRatio = '9/16'; // Portrait
                     break;
-                case 'square':
-                    previewText = currentLang === 'ar' ? 'مربع - 1080x1080' : 'Square - 1080x1080';
-                    aspectRatio = '1/1'; // Square
-                    break;
                 case 'landscape':
                 default:
                     previewText = currentLang === 'ar' ? 'أفقي - 1920x1080' : 'Landscape - 1920x1080';
@@ -11487,15 +11611,12 @@ function loadPrayerOffsets() {
                 videoPreviewContainer.style.aspectRatio = aspectRatio;
                 
                 // Remove existing orientation classes
-                videoPreviewContainer.classList.remove('orientation-landscape', 'orientation-portrait', 'orientation-square');
+                videoPreviewContainer.classList.remove('orientation-landscape', 'orientation-portrait');
                 
                 // Add appropriate orientation class
                 switch (selectedOrientation) {
                     case 'portrait':
                         videoPreviewContainer.classList.add('orientation-portrait');
-                        break;
-                    case 'square':
-                        videoPreviewContainer.classList.add('orientation-square');
                         break;
                     case 'landscape':
                     default:
@@ -11513,7 +11634,7 @@ function loadPrayerOffsets() {
     // Load video backgrounds for video generation
     async function loadVideoBackgrounds() {
         try {
-            const response = await fetch('https://adkar.zeabur.app/api/backgrounds');
+            const response = await fetch('http://localhost:3000/api/backgrounds');
             const backgrounds = await response.json();
             
             const backgroundGrid = document.getElementById('backgroundGrid');
@@ -11871,6 +11992,9 @@ function loadPrayerOffsets() {
     }
 
     function loadVideoAyahs(surahNumber) {
+        console.log('🔄 loadVideoAyahs called with surah:', surahNumber);
+        console.log('🔍 Current selectedVideoAyah before loading:', selectedVideoAyah);
+        
         if (!quranData || !surahNumber) return;
         
         const surah = quranData[surahNumber - 1];
@@ -11884,7 +12008,10 @@ function loadPrayerOffsets() {
                 option.textContent = `آية ${ayah.numberInSurah}`;
                 ayahSelect.appendChild(option);
             });
+            console.log('📋 Populated ayah dropdown with', surah.ayahs.length, 'verses');
         }
+        
+        console.log('🔍 selectedVideoAyah after loading:', selectedVideoAyah);
     }
 
     // Update selected verse display
@@ -11934,8 +12061,8 @@ function loadPrayerOffsets() {
 
         try {
             const audioUrl = selectedVideoAyahTo 
-            ? `https://adkar.zeabur.app/api/verse-audio-range/${selectedVideoSurah}/${selectedVideoAyah}/${selectedVideoAyahTo}/${selectedVideoReciter}`
-            : `https://adkar.zeabur.app/api/verse-audio/${selectedVideoSurah}/${selectedVideoAyah}/${selectedVideoReciter}`;
+            ? `http://localhost:3000/api/verse-audio-range/${selectedVideoSurah}/${selectedVideoAyah}/${selectedVideoAyahTo}/${selectedVideoReciter}`
+            : `http://localhost:3000/api/verse-audio/${selectedVideoSurah}/${selectedVideoAyah}/${selectedVideoReciter}`;
         
         const response = await fetch(audioUrl);
             const data = await response.json();
@@ -12014,7 +12141,7 @@ function loadPrayerOffsets() {
             console.log('Requesting live preview generation...');
             console.log('Preview request data:', requestData);
             
-            const response = await fetch('https://adkar.zeabur.app/api/preview-video', {
+            const response = await fetch('http://localhost:3000/api/preview-video', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -12026,6 +12153,7 @@ function loadPrayerOffsets() {
             
             if (result.success) {
                 console.log('Live preview generated:', result.previewUrl);
+                console.log('About to load video from URL:', result.previewUrl);
                 
                 // Show the actual generated video preview
                 preview.innerHTML = `
@@ -12037,6 +12165,10 @@ function loadPrayerOffsets() {
                             loop 
                             playsinline
                             controls
+                            onloadstart="console.log('Video loading started:', '${result.previewUrl}')"
+                            oncanplay="console.log('Video can play:', '${result.previewUrl}')"
+                            onplay="console.log('Video started playing:', '${result.previewUrl}')"
+                            onerror="console.error('Video load error:', event, '${result.previewUrl}')"
                         >
                             <source src="${result.previewUrl}?t=${Date.now()}" type="video/mp4">
                             Your browser does not support the video tag.
@@ -12201,9 +12333,6 @@ function loadPrayerOffsets() {
                 case 'portrait':
                     preview.classList.add('aspect-[9/16]'); // 9:16 for portrait
                     break;
-                case 'square':
-                    preview.classList.add('aspect-square'); // 1:1 for square
-                    break;
                 case 'landscape':
                 default:
                     preview.classList.add('aspect-video'); // 16:9 for landscape
@@ -12311,7 +12440,7 @@ function loadPrayerOffsets() {
             }
 
             // Send request
-            const response = await fetch('https://adkar.zeabur.app/api/generate-video', {
+            const response = await fetch('http://localhost:3000/api/generate-video', {
                 method: 'POST',
                 body: formData
             });
@@ -12366,7 +12495,7 @@ function loadPrayerOffsets() {
         }
 
         const link = document.createElement('a');
-        link.href = `https://adkar.zeabur.app${window.generatedVideoInfo.downloadUrl}`;
+        link.href = `http://localhost:3000${window.generatedVideoInfo.downloadUrl}`;
         link.download = `quran-verse-${window.generatedVideoInfo.videoId}.mp4`;
         document.body.appendChild(link);
         link.click();
