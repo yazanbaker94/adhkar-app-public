@@ -11459,8 +11459,8 @@ function loadPrayerOffsets() {
     async function loadVideoReciters() {
         console.log('loadVideoReciters: Starting...');
         try {
-            console.log('loadVideoReciters: Fetching from http://localhost:3000/api/reciters...');
-            const response = await fetch('http://localhost:3000/api/reciters');
+            console.log('loadVideoReciters: Fetching from https://adkar.zeabur.app/api/reciters...');
+            const response = await fetch('https://adkar.zeabur.app/api/reciters');
             console.log('loadVideoReciters: Response status:', response.status);
             const reciters = await response.json();
             console.log('loadVideoReciters: Received reciters:', reciters);
@@ -11510,7 +11510,7 @@ function loadPrayerOffsets() {
     async function loadVideoFonts() {
         try {
             console.log('loadVideoFonts: Starting...');
-            const response = await fetch('http://localhost:3000/api/fonts');
+            const response = await fetch('https://adkar.zeabur.app/api/fonts');
             console.log('loadVideoFonts: Response status:', response.status);
             const fonts = await response.json();
             console.log('loadVideoFonts: Received fonts:', fonts);
@@ -11634,7 +11634,7 @@ function loadPrayerOffsets() {
     // Load video backgrounds for video generation
     async function loadVideoBackgrounds() {
         try {
-            const response = await fetch('http://localhost:3000/api/backgrounds');
+            const response = await fetch('https://adkar.zeabur.app/api/backgrounds');
             const backgrounds = await response.json();
             
             const backgroundGrid = document.getElementById('backgroundGrid');
@@ -12061,8 +12061,8 @@ function loadPrayerOffsets() {
 
         try {
             const audioUrl = selectedVideoAyahTo 
-            ? `http://localhost:3000/api/verse-audio-range/${selectedVideoSurah}/${selectedVideoAyah}/${selectedVideoAyahTo}/${selectedVideoReciter}`
-            : `http://localhost:3000/api/verse-audio/${selectedVideoSurah}/${selectedVideoAyah}/${selectedVideoReciter}`;
+            ? `https://adkar.zeabur.app/api/verse-audio-range/${selectedVideoSurah}/${selectedVideoAyah}/${selectedVideoAyahTo}/${selectedVideoReciter}`
+            : `https://adkar.zeabur.app/api/verse-audio/${selectedVideoSurah}/${selectedVideoAyah}/${selectedVideoReciter}`;
         
         const response = await fetch(audioUrl);
             const data = await response.json();
@@ -12141,7 +12141,7 @@ function loadPrayerOffsets() {
             console.log('Requesting live preview generation...');
             console.log('Preview request data:', requestData);
             
-            const response = await fetch('http://localhost:3000/api/preview-video', {
+            const response = await fetch('https://adkar.zeabur.app/api/preview-video', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -12440,7 +12440,7 @@ function loadPrayerOffsets() {
             }
 
             // Send request
-            const response = await fetch('http://localhost:3000/api/generate-video', {
+            const response = await fetch('https://adkar.zeabur.app/api/generate-video', {
                 method: 'POST',
                 body: formData
             });
