@@ -9,6 +9,7 @@ package-lock.json
 generated/
 temp/
 /videos/
+/generated/
 # Environment variables
 .env
 .env.local
