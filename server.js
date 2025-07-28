@@ -118,6 +118,71 @@ dirs.forEach(dir => {
   fs.ensureDirSync(path.join(__dirname, dir));
 });
 
+function calculateOptimalTextSize(text, fontFamily, baseSize, maxWidth, maxHeight) {
+  console.log('📏 calculateOptimalTextSize called with:');
+  console.log(`Text: "${text.substring(0, 50)}${text.length > 50 ? '...' : ''}"`);
+  console.log(`Font: ${fontFamily}, Size: ${baseSize}, MaxWidth: ${maxWidth}, MaxHeight: ${maxHeight}`);
+  
+  const tempCanvas = createCanvas(100, 100);
+  const tempCtx = tempCanvas.getContext('2d');
+  
+  let optimalSize = baseSize;
+  let lines = [text]; // Start with single line
+  
+  // Test font sizes from base down to minimum
+  for (let size = baseSize; size >= 16; size -= 2) {
+    tempCtx.font = `${size}px "${fontFamily}"`;
+    
+    // Try single line first
+    const singleLineWidth = tempCtx.measureText(text).width;
+    const lineHeight = size * 1.3;
+    
+    if (singleLineWidth <= maxWidth && lineHeight <= maxHeight) {
+      optimalSize = size;
+      lines = [text];
+      break;
+    }
+    
+    // Try text wrapping for both Arabic and non-Arabic text
+    // Check if text contains Arabic characters
+    const hasArabic = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(text);
+    
+    console.log(`📝 ${hasArabic ? 'Arabic' : 'Non-Arabic'} text detected, attempting wrapping at size ${size}px`);
+    
+    // For both Arabic and non-Arabic text, use word wrapping
+    const words = text.split(' ');
+    if (words.length > 1) {
+      const wrappedLines = [];
+      let currentLine = '';
+      
+      for (const word of words) {
+        const testLine = currentLine ? `${currentLine} ${word}` : word;
+        const testWidth = tempCtx.measureText(testLine).width;
+        
+        if (testWidth <= maxWidth) {
+          currentLine = testLine;
+        } else {
+          if (currentLine) wrappedLines.push(currentLine);
+          currentLine = word;
+        }
+      }
+      if (currentLine) wrappedLines.push(currentLine);
+      
+      const totalHeight = wrappedLines.length * lineHeight;
+      if (totalHeight <= maxHeight) {
+        optimalSize = size;
+        lines = wrappedLines;
+        break;
+      }
+    }
+  }
+  
+  console.log(`Calculated optimal size for "${text.substring(0, 30)}...": ${optimalSize}px, lines: ${lines.length}`);
+  if (lines.length > 1) {
+    console.log('Text wrapped into lines:', lines.map(line => `"${line.substring(0, 20)}..."`));
+  }
+  return { fontSize: optimalSize, lines: lines };
+}
 // Set FFmpeg path (you may need to adjust this based on your system)
 // For Windows, you might need to install FFmpeg and set the path
 // ffmpeg.setFfmpegPath('C:\\ffmpeg\\bin\\ffmpeg.exe');
@@ -195,7 +260,6 @@ app.post('/api/preview-video', async (req, res) => {
       const textColorValue = textColor || '#ffffff';
       const baseFontSize = fontSize || Math.floor(videoHeight * 0.045);
 
-      // Ensure temp directory exists
       fs.ensureDirSync(path.join(__dirname, 'temp'));
 
       const fontMapping = {
@@ -222,82 +286,53 @@ app.post('/api/preview-video', async (req, res) => {
           translationText += translation.text;
       }
       arabicText = arabicText.normalize('NFC').replace(/ٱ/g, 'ا');
-
-      // --- 3. Calculate Text Wrapping and Required Heights ---
-      const arabicFontSize = baseFontSize;
-      const translationFontSize = Math.floor(baseFontSize * 0.7);
-      const tempCtx = createCanvas(1, 1).getContext('2d');
       
-      tempCtx.font = `${arabicFontSize}px "${selectedFont}"`;
-      const arabicWords = arabicText.split(' ');
-      const arabicWrappedLines = [];
-      let currentArabicLine = '';
-      for (const word of arabicWords) {
-          const testLine = currentArabicLine ? `${currentArabicLine} ${word}` : word;
-          if (tempCtx.measureText(testLine).width > maxTextWidth && currentArabicLine) {
-              arabicWrappedLines.push(currentArabicLine);
-              currentArabicLine = word;
-          } else {
-              currentArabicLine = testLine;
-          }
-      }
-      arabicWrappedLines.push(currentArabicLine);
-      
-      tempCtx.font = `${translationFontSize}px "Arial"`;
-      const translationWords = translationText.split(' ');
-      const translationWrappedLines = [];
-      let currentTranslationLine = '';
-      for (const word of translationWords) {
-          const testLine = currentTranslationLine ? `${currentTranslationLine} ${word}` : word;
-          if (tempCtx.measureText(testLine).width > maxTextWidth && currentTranslationLine) {
-              translationWrappedLines.push(currentTranslationLine);
-              currentTranslationLine = word;
-          } else {
-              currentTranslationLine = testLine;
-          }
-      }
-      translationWrappedLines.push(currentTranslationLine);
+      // --- 3. Calculate Optimal Text Size using the helper function ---
+      const arabicTextHeight = Math.floor(videoHeight * 0.2);
+      const translationTextHeight = Math.floor(videoHeight * 0.15);
 
-      const arabicBlockHeight = arabicFontSize * 1.3 * arabicWrappedLines.length;
-      const translationBlockHeight = translationFontSize * 1.3 * translationWrappedLines.length;
+      // Call the new shared function to get the correct font size and wrapped lines
+      const arabicTextData = calculateOptimalTextSize(arabicText, selectedFont, baseFontSize, maxTextWidth, arabicTextHeight);
+      const translationTextData = calculateOptimalTextSize(translationText, 'Arial', Math.floor(baseFontSize * 0.7), maxTextWidth, translationTextHeight);
+      
+      const arabicBlockHeight = arabicTextData.fontSize * 1.3 * arabicTextData.lines.length;
+      const translationBlockHeight = translationTextData.fontSize * 1.3 * translationTextData.lines.length;
 
       // --- 4. Create Dynamically-Sized Text Canvases ---
       const tempArabicTextPath = path.join(__dirname, 'temp', `${previewId}_arabic.png`);
       const arabicCanvas = createCanvas(videoWidth, arabicBlockHeight);
       const arabicCtx = arabicCanvas.getContext('2d');
-      arabicCtx.font = `${arabicFontSize}px "${selectedFont}"`;
+      arabicCtx.font = `${arabicTextData.fontSize}px "${selectedFont}"`; // Use calculated font size
       arabicCtx.fillStyle = textColorValue;
       arabicCtx.textAlign = 'center';
       arabicCtx.textBaseline = 'middle';
-      arabicWrappedLines.forEach((line, index) => {
-          const y = (index * arabicFontSize * 1.3) + (arabicFontSize * 1.3 / 2);
+      arabicTextData.lines.forEach((line, index) => { // Use calculated lines
+          const y = (index * arabicTextData.fontSize * 1.3) + (arabicTextData.fontSize * 1.3 / 2);
           arabicCtx.fillText(line, videoWidth / 2, y);
       });
-      console.log('💾 Saving Arabic text image...');
       fs.writeFileSync(tempArabicTextPath, arabicCanvas.toBuffer('image/png'));
-      console.log('✅ Arabic text image saved');
 
       const tempTranslationTextPath = path.join(__dirname, 'temp', `${previewId}_translation.png`);
       const translationCanvas = createCanvas(videoWidth, translationBlockHeight);
       const translationCtx = translationCanvas.getContext('2d');
-      translationCtx.font = `${translationFontSize}px "Arial"`;
+      translationCtx.font = `${translationTextData.fontSize}px "Arial"`; // Use calculated font size
       translationCtx.fillStyle = textColorValue;
       translationCtx.textAlign = 'center';
       translationCtx.textBaseline = 'middle';
-      translationWrappedLines.forEach((line, index) => {
-          const y = (index * translationFontSize * 1.3) + (translationFontSize * 1.3 / 2);
+      translationTextData.lines.forEach((line, index) => { // Use calculated lines
+          const y = (index * translationTextData.fontSize * 1.3) + (translationTextData.fontSize * 1.3 / 2);
           translationCtx.fillText(line, videoWidth / 2, y);
       });
-      console.log('💾 Saving translation text image...');
       fs.writeFileSync(tempTranslationTextPath, translationCanvas.toBuffer('image/png'));
-      console.log('✅ Translation text image saved');
       
       // --- 5. Calculate Final Positions & Create Overlays ---
       const textGap = Math.floor(videoHeight * 0.03);
       const totalContentHeight = arabicBlockHeight + textGap + translationBlockHeight;
-      
       const arabicTopPosition = (videoHeight - totalContentHeight) / 2;
       const translationTopPosition = arabicTopPosition + arabicBlockHeight + textGap;
+
+      // ... The rest of the preview route remains the same, as it correctly uses these calculated positions ...
+      // ... (unified overlay, watermark, ffmpeg command, etc.) ...
 
       const overlayPadding = Math.floor(videoHeight * 0.05);
       const overlayX = (videoWidth * 0.05);
@@ -312,11 +347,8 @@ app.post('/api/preview-video', async (req, res) => {
       unifiedOverlayCtx.roundRect(overlayX, overlayY, overlayWidth, overlayHeight, 25);
       unifiedOverlayCtx.fill();
       const tempUnifiedOverlayPath = path.join(__dirname, 'temp', `${previewId}_overlay.png`);
-      console.log('💾 Saving unified overlay image...');
       fs.writeFileSync(tempUnifiedOverlayPath, unifiedOverlayCanvas.toBuffer('image/png'));
-      console.log('✅ Unified overlay image saved');
       
-      // --- 5a. Create Modern Watermark (RESTORED) ---
       const watermarkCanvas = createCanvas(videoWidth, videoHeight);
       const watermarkCtx = watermarkCanvas.getContext('2d');
       const tempWatermarkPath = path.join(__dirname, 'temp', `${previewId}_watermark.png`);
@@ -348,14 +380,10 @@ app.post('/api/preview-video', async (req, res) => {
       watermarkCtx.textBaseline = 'top';
       watermarkCtx.fillText(surahWithVerse, watermarkPadding, watermarkPadding);
 
-      console.log('💾 Saving watermark image...');
       fs.writeFileSync(tempWatermarkPath, watermarkCanvas.toBuffer('image/png'));
-      console.log('✅ Watermark image saved');
 
-      // --- 6. Prepare Background and Generate Video with FFmpeg ---
       const backgroundPath = path.join(__dirname, 'videos', backgroundFilename);
       
-      // Validate background file exists
       if (!fs.existsSync(backgroundPath)) {
           throw new Error(`Background video not found: ${backgroundPath}`);
       }
@@ -377,45 +405,25 @@ app.post('/api/preview-video', async (req, res) => {
           .outputOptions(['-map', '[final]', '-c:v', 'libx264', '-preset', 'ultrafast', '-pix_fmt', 'yuv420p', '-an'])
           .output(path.join(__dirname, 'previews', `${previewId}.mp4`));
 
-      // Ensure previews directory exists
       fs.ensureDirSync(path.join(__dirname, 'previews'));
-
-      console.log('🎬 Starting FFmpeg preview generation...');
-      console.log('FFmpeg command inputs:');
-      console.log('- Background:', backgroundPath);
-      console.log('- Arabic text:', tempArabicTextPath);
-      console.log('- Translation text:', tempTranslationTextPath);
-      console.log('- Overlay:', tempUnifiedOverlayPath);
-      console.log('- Watermark:', tempWatermarkPath);
-      console.log('- Output:', path.join(__dirname, 'previews', `${previewId}.mp4`));
 
       await new Promise((resolve, reject) => {
           const timeout = setTimeout(() => {
-              console.error('⏰ FFmpeg timeout after 30 seconds');
               reject(new Error('FFmpeg timeout after 30 seconds'));
-          }, 30000); // 30 second timeout
+          }, 30000);
 
           command
-              .on('start', (commandLine) => {
-                  console.log('🚀 FFmpeg started with command:', commandLine);
-              })
-              .on('progress', (progress) => {
-                  console.log('📊 FFmpeg progress:', progress.percent ? `${progress.percent.toFixed(1)}%` : 'processing...');
-              })
               .on('end', () => {
                   clearTimeout(timeout);
-                  console.log('✅ FFmpeg preview generation completed successfully');
                   resolve();
               })
               .on('error', (err) => {
                   clearTimeout(timeout);
-                  console.error('❌ FFmpeg error:', err);
                   reject(err);
               })
               .run();
       });
 
-      // --- 7. Cleanup and Respond ---
       fs.unlinkSync(tempArabicTextPath);
       fs.unlinkSync(tempTranslationTextPath);
       fs.unlinkSync(tempUnifiedOverlayPath);
@@ -456,10 +464,10 @@ app.get('/api/thumbnail/:filename', (req, res) => {
   const videoPath = path.join(__dirname, 'videos', filename);
   const thumbnailsDir = path.join(__dirname, 'thumbnails');
   const thumbnailPath = path.join(thumbnailsDir, `${filename}.jpg`);
-
+  console.log("thumbnailPath", thumbnailPath)
+  console.log("videoPath", videoPath)
   // Ensure thumbnails directory exists
   fs.ensureDirSync(thumbnailsDir);
-
   // Check if thumbnail already exists
   if (fs.existsSync(thumbnailPath)) {
     res.sendFile(thumbnailPath);
@@ -1005,71 +1013,6 @@ app.post('/api/generate-video', upload.single('background'), async (req, res) =>
     console.log(`Text constraints - Width: ${maxTextWidth}, Arabic height: ${arabicTextHeight}, Translation height: ${translationTextHeight}`);
     
     // Function to calculate optimal font size and handle text wrapping
-    function calculateOptimalTextSize(text, fontFamily, baseSize, maxWidth, maxHeight) {
-      console.log('📏 calculateOptimalTextSize called with:');
-      console.log(`Text: "${text.substring(0, 50)}${text.length > 50 ? '...' : ''}"`);
-      console.log(`Font: ${fontFamily}, Size: ${baseSize}, MaxWidth: ${maxWidth}, MaxHeight: ${maxHeight}`);
-      
-      const tempCanvas = createCanvas(100, 100);
-      const tempCtx = tempCanvas.getContext('2d');
-      
-      let optimalSize = baseSize;
-      let lines = [text]; // Start with single line
-      
-      // Test font sizes from base down to minimum
-      for (let size = baseSize; size >= 16; size -= 2) {
-        tempCtx.font = `${size}px "${fontFamily}"`;
-        
-        // Try single line first
-        const singleLineWidth = tempCtx.measureText(text).width;
-        const lineHeight = size * 1.3;
-        
-        if (singleLineWidth <= maxWidth && lineHeight <= maxHeight) {
-          optimalSize = size;
-          lines = [text];
-          break;
-        }
-        
-        // Try text wrapping for both Arabic and non-Arabic text
-        // Check if text contains Arabic characters
-        const hasArabic = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(text);
-        
-        console.log(`📝 ${hasArabic ? 'Arabic' : 'Non-Arabic'} text detected, attempting wrapping at size ${size}px`);
-        
-        // For both Arabic and non-Arabic text, use word wrapping
-        const words = text.split(' ');
-        if (words.length > 1) {
-          const wrappedLines = [];
-          let currentLine = '';
-          
-          for (const word of words) {
-            const testLine = currentLine ? `${currentLine} ${word}` : word;
-            const testWidth = tempCtx.measureText(testLine).width;
-            
-            if (testWidth <= maxWidth) {
-              currentLine = testLine;
-            } else {
-              if (currentLine) wrappedLines.push(currentLine);
-              currentLine = word;
-            }
-          }
-          if (currentLine) wrappedLines.push(currentLine);
-          
-          const totalHeight = wrappedLines.length * lineHeight;
-          if (totalHeight <= maxHeight) {
-            optimalSize = size;
-            lines = wrappedLines;
-            break;
-          }
-        }
-      }
-      
-      console.log(`Calculated optimal size for "${text.substring(0, 30)}...": ${optimalSize}px, lines: ${lines.length}`);
-      if (lines.length > 1) {
-        console.log('Text wrapped into lines:', lines.map(line => `"${line.substring(0, 20)}..."`));
-      }
-      return { fontSize: optimalSize, lines: lines };
-    }
     
     // Map user-friendly font names to correct internal names (with system font fallbacks)
     const fontMapping = {
@@ -1470,8 +1413,7 @@ console.log('✅ Modern watermark overlay created');
     res.json({
       success: true,
       videoId,
-      downloadUrl: `/api/download/${videoId}`,
-      shareUrl: `/api/share/${videoId}`
+      downloadUrl: `/api/download/${videoId}`
     });
 
   } catch (error) {
@@ -1495,7 +1437,7 @@ app.get('/api/download/:videoId', (req, res) => {
     
     // Set proper headers for video download
     res.setHeader('Content-Type', 'video/mp4');
-    res.setHeader('Content-Disposition', `attachment; filename="quran-verse-${videoId}.mp4"`);
+    res.setHeader('Content-Disposition', `attachment; filename="sakinahtime-dot-com-${videoId}.mp4"`);
     res.setHeader('Content-Length', stats.size);
     
     // Stream the file
@@ -1512,23 +1454,6 @@ app.get('/api/download/:videoId', (req, res) => {
   }
 });
 
-// Share video (returns video info)
-app.get('/api/share/:videoId', (req, res) => {
-  const { videoId } = req.params;
-  const videoPath = path.join(__dirname, 'generated', `${videoId}.mp4`);
-  
-  if (fs.existsSync(videoPath)) {
-    const stats = fs.statSync(videoPath);
-    res.json({
-      videoId,
-      size: stats.size,
-      created: stats.birthtime,
-      downloadUrl: `/api/download/${videoId}`
-    });
-  } else {
-    res.status(404).json({ error: 'Video not found' });
-  }
-});
 
 // Clean up old videos (run periodically)
 app.post('/api/cleanup', (req, res) => {

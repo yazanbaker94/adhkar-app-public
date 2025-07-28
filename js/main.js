@@ -134,6 +134,23 @@
       let current = 0;
       let filteredAdhkar = [];
 let currentLang = 'en';
+
+// Helper function to get the correct API base URL based on environment
+function getApiBaseUrl() {
+    // Check if there's a custom API URL defined (for different deployment setups)
+    if (window.API_BASE_URL) {
+        return window.API_BASE_URL;
+    }
+    
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        // Local development - backend runs on port 3000
+        return window.location.protocol + '//' + window.location.hostname + ':3000';
+    } else {
+        // Production - backend runs on the same domain as frontend
+        // This works for most deployment scenarios (Vercel, Netlify, Zeabur, etc.)
+        return window.location.origin;
+    }
+}
 let currentCity = "Amman";
 
 // Prayer time format preference
@@ -5428,6 +5445,100 @@ function showARUnsupported(errorType) {
         }
       }
 
+        // Function to handle shared video URLs
+        function handleSharedVideoURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const videoId = urlParams.get('video');
+            
+            if (videoId) {
+                console.log('Shared video detected:', videoId);
+                
+                // Switch to video tab
+                switchTab('video');
+                
+                // Show a modal or overlay with the shared video
+                showSharedVideoModal(videoId);
+            }
+        }
+        
+        // Function to show the shared video in a modal
+        function showSharedVideoModal(videoId) {
+            const apiBaseUrl = getApiBaseUrl();
+            const videoUrl = `${apiBaseUrl}/api/download/${videoId}`;
+            
+            // Create modal HTML
+            const modalHTML = `
+                <div id="sharedVideoModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+                    <div class="bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
+                        <div class="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-600">
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                                ${currentLang === 'ar' ? 'فيديو قرآني مشارك' : 'Shared Quran Video'}
+                            </h3>
+                            <button onclick="closeSharedVideoModal()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                                <i class="fas fa-times text-xl"></i>
+                            </button>
+                        </div>
+                        <div class="p-4">
+                            <video controls class="w-full max-h-[70vh] rounded-lg">
+                                <source src="${videoUrl}" type="video/mp4">
+                                ${currentLang === 'ar' ? 'متصفحك لا يدعم تشغيل الفيديو' : 'Your browser does not support the video tag.'}
+                            </video>
+                            <div class="mt-4 flex gap-2 justify-center">
+                                <a href="${videoUrl}" download class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+                                    <i class="fas fa-download mr-2"></i>
+                                    ${currentLang === 'ar' ? 'تحميل الفيديو' : 'Download Video'}
+                                </a>
+                                <button onclick="shareCurrentVideo('${videoId}')" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
+                                    <i class="fas fa-share mr-2"></i>
+                                    ${currentLang === 'ar' ? 'مشاركة' : 'Share'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add modal to page
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+        
+        // Function to close the shared video modal
+        window.closeSharedVideoModal = function() {
+            const modal = document.getElementById('sharedVideoModal');
+            if (modal) {
+                modal.remove();
+            }
+            
+            // Clean up URL
+            const url = new URL(window.location);
+            url.searchParams.delete('video');
+            window.history.replaceState({}, '', url);
+        };
+        
+        // Function to share the current video from the modal
+        window.shareCurrentVideo = function(videoId) {
+            const shareUrl = `${window.location.origin}${window.location.pathname}?video=${videoId}`;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: currentLang === 'ar' ? 'فيديو قرآن' : 'Quran Video',
+                    text: currentLang === 'ar' ? 'شاهد هذا الفيديو الجميل للقرآن' : 'Check out this beautiful Quran video',
+                    url: shareUrl
+                }).then(() => {
+                    showToast(currentLang === 'ar' ? 'تم المشاركة بنجاح' : 'Shared successfully', 'success');
+                }).catch(err => {
+                    console.log('Error sharing:', err);
+                    navigator.clipboard.writeText(shareUrl).then(() => {
+                        showToast(currentLang === 'ar' ? 'تم نسخ رابط المشاركة' : 'Share link copied to clipboard', 'success');
+                    });
+                });
+            } else {
+                navigator.clipboard.writeText(shareUrl).then(() => {
+                    showToast(currentLang === 'ar' ? 'تم نسخ رابط المشاركة' : 'Share link copied to clipboard', 'success');
+                });
+            }
+        };
+
         document.addEventListener('DOMContentLoaded', async () => {
     // Initialize preview aspect ratio
     setTimeout(() => {
@@ -5754,6 +5865,9 @@ function showARUnsupported(errorType) {
         recognition.lang = currentLang === 'ar';
       }
     };
+    
+    // Handle shared video URLs (e.g., ?video=video-id)
+    handleSharedVideoURL();
     
         });
 
@@ -11459,8 +11573,9 @@ function loadPrayerOffsets() {
     async function loadVideoReciters() {
         console.log('loadVideoReciters: Starting...');
         try {
-            console.log('loadVideoReciters: Fetching from https://adkar.zeabur.app/api/reciters...');
-            const response = await fetch('https://adkar.zeabur.app/api/reciters');
+            const apiBaseUrl = getApiBaseUrl();
+            console.log(`loadVideoReciters: Fetching from ${apiBaseUrl}/api/reciters...`);
+            const response = await fetch(`${apiBaseUrl}/api/reciters`);
             console.log('loadVideoReciters: Response status:', response.status);
             const reciters = await response.json();
             console.log('loadVideoReciters: Received reciters:', reciters);
@@ -11510,7 +11625,8 @@ function loadPrayerOffsets() {
     async function loadVideoFonts() {
         try {
             console.log('loadVideoFonts: Starting...');
-            const response = await fetch('https://adkar.zeabur.app/api/fonts');
+            const apiBaseUrl = getApiBaseUrl();
+            const response = await fetch(`${apiBaseUrl}/api/fonts`);
             console.log('loadVideoFonts: Response status:', response.status);
             const fonts = await response.json();
             console.log('loadVideoFonts: Received fonts:', fonts);
@@ -11634,7 +11750,8 @@ function loadPrayerOffsets() {
     // Load video backgrounds for video generation
     async function loadVideoBackgrounds() {
         try {
-            const response = await fetch('https://adkar.zeabur.app/api/backgrounds');
+            const apiBaseUrl = getApiBaseUrl();
+            const response = await fetch(`${apiBaseUrl}/api/backgrounds`);
             const backgrounds = await response.json();
             
             const backgroundGrid = document.getElementById('backgroundGrid');
@@ -11762,18 +11879,29 @@ function loadPrayerOffsets() {
         const surahSelect = document.getElementById('videoSurahSelect');
         console.log('loadVideoSurahs: Found surah select element:', !!surahSelect);
         if (surahSelect) {
-            surahSelect.innerHTML = '<option value="">اختر السورة</option>';
+            // Set placeholder text based on current language
+            const placeholderText = currentLang === 'ar' ? 'اختر السورة' : 'Select Surah';
+            surahSelect.innerHTML = `<option value="">${placeholderText}</option>`;
             console.log('loadVideoSurahs: Quran data structure:', quranData);
             console.log('loadVideoSurahs: Number of surahs:', quranData.length);
+            console.log('loadVideoSurahs: Current language:', currentLang);
             
             // quranData is already an array of surahs (extracted from data.surahs)
             quranData.forEach((surah, index) => {
                 const option = document.createElement('option');
                 option.value = index + 1;
-                option.textContent = `${surah.number}. ${surah.name}`;
+                
+                // Display name based on current language
+                const displayName = currentLang === 'ar' ? surah.name : (surah.englishName || surah.name);
+                option.textContent = `${surah.number}. ${displayName}`;
+                
+                // Add both Arabic and English names as data attributes for reference
+                option.setAttribute('data-arabic-name', surah.name);
+                option.setAttribute('data-english-name', surah.englishName || surah.name);
+                
                 surahSelect.appendChild(option);
             });
-            console.log('loadVideoSurahs: Added', quranData.length, 'surahs to dropdown');
+            console.log('loadVideoSurahs: Added', quranData.length, 'surahs to dropdown with language:', currentLang);
         } else {
             console.error('loadVideoSurahs: Surah select element not found!');
         }
@@ -11973,8 +12101,9 @@ function loadPrayerOffsets() {
         const ayahToSelect = document.getElementById('videoAyahToSelect');
         if (!ayahToSelect || !selectedVideoAyah || !selectedVideoSurah) return;
         
-        // Clear existing options
-        ayahToSelect.innerHTML = '<option value="">آية واحدة فقط</option>';
+        // Clear existing options with language-appropriate text
+        const singleVerseText = currentLang === 'ar' ? 'آية واحدة فقط' : 'Single Verse';
+        ayahToSelect.innerHTML = `<option value="">${singleVerseText}</option>`;
         
         // Get max verses for current surah
         const surah = quranData[selectedVideoSurah - 1];
@@ -11986,7 +12115,9 @@ function loadPrayerOffsets() {
         for (let i = selectedVideoAyah + 1; i <= maxVerse; i++) {
             const option = document.createElement('option');
             option.value = i;
-            option.textContent = `الآية ${i}`;
+            // Use language-appropriate text for verse
+            const verseText = currentLang === 'ar' ? `الآية ${i}` : `Verse ${i}`;
+            option.textContent = verseText;
             ayahToSelect.appendChild(option);
         }
     }
@@ -12001,14 +12132,19 @@ function loadPrayerOffsets() {
         const ayahSelect = document.getElementById('videoAyahSelect');
         
         if (ayahSelect && surah) {
-            ayahSelect.innerHTML = '<option value="">اختر الآية</option>';
+            // Set placeholder text based on current language
+            const placeholderText = currentLang === 'ar' ? 'اختر الآية' : 'Select Verse';
+            ayahSelect.innerHTML = `<option value="">${placeholderText}</option>`;
+            
             surah.ayahs.forEach((ayah, index) => {
                 const option = document.createElement('option');
                 option.value = index + 1;
-                option.textContent = `آية ${ayah.numberInSurah}`;
+                // Use language-appropriate text for verse
+                const verseText = currentLang === 'ar' ? `آية ${ayah.numberInSurah}` : `Verse ${ayah.numberInSurah}`;
+                option.textContent = verseText;
                 ayahSelect.appendChild(option);
             });
-            console.log('📋 Populated ayah dropdown with', surah.ayahs.length, 'verses');
+            console.log('📋 Populated ayah dropdown with', surah.ayahs.length, 'verses in', currentLang);
         }
         
         console.log('🔍 selectedVideoAyah after loading:', selectedVideoAyah);
@@ -12060,9 +12196,10 @@ function loadPrayerOffsets() {
         }
 
         try {
+            const apiBaseUrl = getApiBaseUrl();
             const audioUrl = selectedVideoAyahTo 
-            ? `https://adkar.zeabur.app/api/verse-audio-range/${selectedVideoSurah}/${selectedVideoAyah}/${selectedVideoAyahTo}/${selectedVideoReciter}`
-            : `https://adkar.zeabur.app/api/verse-audio/${selectedVideoSurah}/${selectedVideoAyah}/${selectedVideoReciter}`;
+            ? `${apiBaseUrl}/api/verse-audio-range/${selectedVideoSurah}/${selectedVideoAyah}/${selectedVideoAyahTo}/${selectedVideoReciter}`
+            : `${apiBaseUrl}/api/verse-audio/${selectedVideoSurah}/${selectedVideoAyah}/${selectedVideoReciter}`;
         
         const response = await fetch(audioUrl);
             const data = await response.json();
@@ -12141,7 +12278,8 @@ function loadPrayerOffsets() {
             console.log('Requesting live preview generation...');
             console.log('Preview request data:', requestData);
             
-            const response = await fetch('https://adkar.zeabur.app/api/preview-video', {
+            const apiBaseUrl = getApiBaseUrl();
+            const response = await fetch(`${apiBaseUrl}/api/preview-video`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -12440,7 +12578,8 @@ function loadPrayerOffsets() {
             }
 
             // Send request
-            const response = await fetch('https://adkar.zeabur.app/api/generate-video', {
+            const apiBaseUrl = getApiBaseUrl();
+            const response = await fetch(`${apiBaseUrl}/api/generate-video`, {
                 method: 'POST',
                 body: formData
             });
@@ -12495,7 +12634,8 @@ function loadPrayerOffsets() {
         }
 
         const link = document.createElement('a');
-        link.href = `http://localhost:3000${window.generatedVideoInfo.downloadUrl}`;
+        const apiBaseUrl = getApiBaseUrl();
+        link.href = `${apiBaseUrl}${window.generatedVideoInfo.downloadUrl}`;
         link.download = `quran-verse-${window.generatedVideoInfo.videoId}.mp4`;
         document.body.appendChild(link);
         link.click();
@@ -12509,16 +12649,31 @@ function loadPrayerOffsets() {
             return;
         }
 
-        const shareUrl = `${window.location.origin}${window.generatedVideoInfo.shareUrl}`;
+        // Create a user-friendly share URL (frontend URL with video ID)
+        const videoId = window.generatedVideoInfo.videoId;
+        const shareUrl = `${window.location.origin}${window.location.pathname}?video=${videoId}`;
+        console.log("videoId:", videoId);
+        console.log("shareUrl:", shareUrl);
         
         if (navigator.share) {
+            // For mobile devices with native sharing, share the video file directly
             navigator.share({
                 title: currentLang === 'ar' ? 'فيديو قرآن' : 'Quran Video',
                 text: currentLang === 'ar' ? 'شاهد هذا الفيديو الجميل للقرآن' : 'Check out this beautiful Quran video',
                 url: shareUrl
+            }).then(() => {
+                showToast(currentLang === 'ar' ? 'تم المشاركة بنجاح' : 'Shared successfully', 'success');
+            }).catch(err => {
+                console.log('Error sharing:', err);
+                // Fallback to clipboard if sharing fails
+                navigator.clipboard.writeText(shareUrl).then(() => {
+                    showToast(currentLang === 'ar' ? 'تم نسخ رابط المشاركة' : 'Share link copied to clipboard', 'success');
+                }).catch(() => {
+                    showToast(currentLang === 'ar' ? 'فشل في نسخ الرابط' : 'Failed to copy link', 'error');
+                });
             });
         } else {
-            // Fallback to clipboard
+            // For desktop/unsupported devices, copy the share URL to clipboard
             navigator.clipboard.writeText(shareUrl).then(() => {
                 showToast(currentLang === 'ar' ? 'تم نسخ رابط المشاركة' : 'Share link copied to clipboard', 'success');
             }).catch(() => {
@@ -12583,30 +12738,79 @@ function loadPrayerOffsets() {
             progressText.textContent = currentLang === 'ar' ? 'جاري إنشاء الفيديو...' : 'Generating video...';
         }
 
-        // Update select placeholders
+        // Update select placeholders and reload surah dropdown with correct language
         const videoSurahSelect = document.getElementById('videoSurahSelect');
-        if (videoSurahSelect && videoSurahSelect.options[0]) {
-            videoSurahSelect.options[0].textContent = currentLang === 'ar' ? 'اختر السورة' : 'Select Surah';
+        if (videoSurahSelect) {
+            // Set direction based on language
+            videoSurahSelect.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+            if (videoSurahSelect.options[0]) {
+                videoSurahSelect.options[0].textContent = currentLang === 'ar' ? 'اختر السورة' : 'Select Surah';
+            }
+        }
+        
+        // Reload surahs with correct language if quranData is available
+        if (quranData && videoSurahSelect) {
+            const currentValue = videoSurahSelect.value; // Preserve current selection
+            loadVideoSurahs(); // Reload with correct language
+            if (currentValue) {
+                videoSurahSelect.value = currentValue; // Restore selection
+            }
         }
 
         const videoAyahSelect = document.getElementById('videoAyahSelect');
-        if (videoAyahSelect && videoAyahSelect.options[0]) {
-            videoAyahSelect.options[0].textContent = currentLang === 'ar' ? 'اختر الآية' : 'Select Verse';
+        if (videoAyahSelect) {
+            // Set direction based on language
+            videoAyahSelect.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+            if (videoAyahSelect.options[0]) {
+                videoAyahSelect.options[0].textContent = currentLang === 'ar' ? 'اختر الآية' : 'Select Verse';
+            }
+        }
+        
+        // Reload ayah dropdown with correct language if a surah is selected
+        if (selectedVideoSurah && quranData) {
+            const currentAyahValue = videoAyahSelect ? videoAyahSelect.value : null;
+            loadVideoAyahs(selectedVideoSurah); // Reload with correct language
+            if (currentAyahValue && videoAyahSelect) {
+                videoAyahSelect.value = currentAyahValue; // Restore selection
+            }
         }
 
         const videoAyahToSelect = document.getElementById('videoAyahToSelect');
-        if (videoAyahToSelect && videoAyahToSelect.options[0]) {
-            videoAyahToSelect.options[0].textContent = currentLang === 'ar' ? 'آية واحدة' : 'Single Verse';
+        if (videoAyahToSelect) {
+            // Set direction based on language
+            videoAyahToSelect.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+            if (videoAyahToSelect.options[0]) {
+                videoAyahToSelect.options[0].textContent = currentLang === 'ar' ? 'آية واحدة' : 'Single Verse';
+            }
+        }
+        
+        // Reload ayah "to" dropdown with correct language if applicable
+        if (selectedVideoAyah && selectedVideoSurah) {
+            updateAyahToDropdown(); // Reload with correct language
         }
 
         const videoReciterSelect = document.getElementById('videoReciterSelect');
-        if (videoReciterSelect && videoReciterSelect.options[0]) {
-            videoReciterSelect.options[0].textContent = currentLang === 'ar' ? 'اختر القارئ' : 'Select Reciter';
+        if (videoReciterSelect) {
+            // Set direction based on language
+            videoReciterSelect.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+            if (videoReciterSelect.options[0]) {
+                videoReciterSelect.options[0].textContent = currentLang === 'ar' ? 'اختر القارئ' : 'Select Reciter';
+            }
         }
 
         const videoFontFamily = document.getElementById('videoFontFamily');
-        if (videoFontFamily && videoFontFamily.options[0]) {
-            videoFontFamily.options[0].textContent = currentLang === 'ar' ? 'اختر نوع الخط' : 'Select Font';
+        if (videoFontFamily) {
+            // Set direction based on language
+            videoFontFamily.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+            if (videoFontFamily.options[0]) {
+                videoFontFamily.options[0].textContent = currentLang === 'ar' ? 'اختر نوع الخط' : 'Select Font';
+            }
+        }
+
+        const videoOrientation = document.getElementById('videoOrientation');
+        if (videoOrientation) {
+            // Set direction based on language
+            videoOrientation.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
         }
 
         // Update selected verse text placeholder
