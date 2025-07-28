@@ -10,6 +10,7 @@ generated/
 temp/
 /videos/
 /generated/
+/previews/
 # Environment variables
 .env
 .env.local
