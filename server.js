@@ -192,25 +192,25 @@ function calculateOptimalTextSize(text, fontFamily, baseSize, maxWidth, maxHeigh
 // Get available reciters
 app.get('/api/reciters', (req, res) => {
   const reciters = [
-    { id: 'abdul_basit', name: 'Abdul Basit Abdul Samad', language: 'Arabic' },
-    { id: 'alafasy', name: 'Mishary Rashid Alafasy', language: 'Arabic' },
-    { id: 'sudais', name: 'Abdur-Rahman As-Sudais', language: 'Arabic' },
-    { id: 'abdullah_basfar', name: 'Abdullah Basfar', language: 'Arabic' },
-    { id: 'abu_bakr_shatri', name: 'Abu Bakr Ash-Shaatree', language: 'Arabic' },
-    { id: 'ahmed_neana', name: 'Ahmed Neana', language: 'Arabic' },
-    { id: 'ahmed_ajamy', name: 'Ahmed ibn Ali al-Ajamy', language: 'Arabic' },
-    { id: 'akram_alaqimy', name: 'Akram AlAlaqimy', language: 'Arabic' },
-    { id: 'ali_hajjaj', name: 'Ali Hajjaj AlSuesy', language: 'Arabic' },
-    { id: 'hani_rifai', name: 'Hani Rifai', language: 'Arabic' },
-    { id: 'hudhaify', name: 'Ali Al-Hudhaify', language: 'Arabic' },
-    { id: 'khalid_qahtani', name: 'Khaalid Abdullaah al-Qahtaanee', language: 'Arabic' },
-    { id: 'minshawy', name: 'Muhammad Siddiq Al-Minshawi', language: 'Arabic' },
-    { id: 'tablaway', name: 'Mohammad al-Tablaway', language: 'Arabic' },
-    { id: 'muhsin_qasim', name: 'Muhsin Al Qasim', language: 'Arabic' },
-    { id: 'abdullaah_juhaynee', name: 'Abdullaah 3awwaad Al-Juhaynee', language: 'Arabic' },
-    { id: 'husary', name: 'Mahmoud Khalil Al-Husary', language: 'Arabic' },
-    { id: 'ghamadi', name: 'Saad Al-Ghamdi', language: 'Arabic' },
-    { id: 'shuraim', name: 'Saud Al-Shuraim', language: 'Arabic' }
+    { id: 'abdul_basit', name: 'Abdul Basit Abdul Samad', nameAr: 'عبد الباسط عبد الصمد', language: 'Arabic' },
+    { id: 'alafasy', name: 'Mishary Rashid Alafasy', nameAr: 'مشاري راشد العفاسي', language: 'Arabic' },
+    { id: 'sudais', name: 'Abdur-Rahman As-Sudais', nameAr: 'عبد الرحمن السديس', language: 'Arabic' },
+    { id: 'abdullah_basfar', name: 'Abdullah Basfar', nameAr: 'عبد الله بصفر', language: 'Arabic' },
+    { id: 'abu_bakr_shatri', name: 'Abu Bakr Ash-Shaatree', nameAr: 'أبو بكر الشاطري', language: 'Arabic' },
+    { id: 'ahmed_neana', name: 'Ahmed Neana', nameAr: 'أحمد نعنا', language: 'Arabic' },
+    { id: 'ahmed_ajamy', name: 'Ahmed ibn Ali al-Ajamy', nameAr: 'أحمد بن علي العجمي', language: 'Arabic' },
+    { id: 'akram_alaqimy', name: 'Akram AlAlaqimy', nameAr: 'أكرم العلاقمي', language: 'Arabic' },
+    { id: 'ali_hajjaj', name: 'Ali Hajjaj AlSuesy', nameAr: 'علي حجاج السويسي', language: 'Arabic' },
+    { id: 'hani_rifai', name: 'Hani Rifai', nameAr: 'هاني رفاعي', language: 'Arabic' },
+    { id: 'hudhaify', name: 'Ali Al-Hudhaify', nameAr: 'علي الحذيفي', language: 'Arabic' },
+    { id: 'khalid_qahtani', name: 'Khaalid Abdullaah al-Qahtaanee', nameAr: 'خالد عبد الله القحطاني', language: 'Arabic' },
+    { id: 'minshawy', name: 'Muhammad Siddiq Al-Minshawi', nameAr: 'محمد صديق المنشاوي', language: 'Arabic' },
+    { id: 'tablaway', name: 'Mohammad al-Tablaway', nameAr: 'محمد الطبلاوي', language: 'Arabic' },
+    { id: 'muhsin_qasim', name: 'Muhsin Al Qasim', nameAr: 'محسن القاسم', language: 'Arabic' },
+    { id: 'abdullaah_juhaynee', name: 'Abdullaah 3awwaad Al-Juhaynee', nameAr: 'عبد الله عواد الجهني', language: 'Arabic' },
+    { id: 'husary', name: 'Mahmoud Khalil Al-Husary', nameAr: 'محمود خليل الحصري', language: 'Arabic' },
+    { id: 'ghamadi', name: 'Saad Al-Ghamdi', nameAr: 'سعد الغامدي', language: 'Arabic' },
+    { id: 'shuraim', name: 'Saud Al-Shuraim', nameAr: 'سعود الشريم', language: 'Arabic' }
   ];
   res.json(reciters);
 });
@@ -563,60 +563,92 @@ app.get('/api/verse-audio/:surah/:ayah/:reciter', async (req, res) => {
   try {
     const { surah, ayah, reciter } = req.params;
     
-    // Construct audio URL based on reciter
-    let audioUrl;
-    const surahStr = surah.toString().padStart(3, '0');
-    const ayahStr = ayah.toString().padStart(3, '0');
-    
+    // Map short reciter IDs to full directory names (same as video generation)
+    let reciterDirectory;
     switch (reciter) {
+      case 'abdul_basit':
+        reciterDirectory = 'Abdul_Basit_Murattal_192kbps';
+        break;
+      case 'alafasy':
+        reciterDirectory = 'Alafasy_128kbps';
+        break;
+      case 'sudais':
+        reciterDirectory = 'Abdurrahmaan_As-Sudais_192kbps';
+        break;
+      case 'abdullah_basfar':
+        reciterDirectory = 'Abdullah_Basfar_192kbps';
+        break;
+      case 'abu_bakr_shatri':
+        reciterDirectory = 'Abu_Bakr_Ash-Shaatree_128kbps';
+        break;
+      case 'ahmed_neana':
+        reciterDirectory = 'Ahmed_Neana_128kbps';
+        break;
+      case 'ahmed_ajamy':
+        reciterDirectory = 'Ahmed_ibn_Ali_al-Ajamy_128kbps_ketaballah.net';
+        break;
+      case 'akram_alaqimy':
+        reciterDirectory = 'Akram_AlAlaqimy_128kbps';
+        break;
+      case 'ali_hajjaj':
+        reciterDirectory = 'Ali_Hajjaj_AlSuesy_128kbps';
+        break;
+      case 'hani_rifai':
+        reciterDirectory = 'Hani_Rifai_192kbps';
+        break;
+      case 'hudhaify':
+        reciterDirectory = 'Hudhaify_128kbps';
+        break;
+      case 'khalid_qahtani':
+        reciterDirectory = 'Khaalid_Abdullaah_al-Qahtaanee_192kbps';
+        break;
+      case 'minshawy':
+        reciterDirectory = 'Minshawy_Murattal_128kbps';
+        break;
+      case 'tablaway':
+        reciterDirectory = 'Mohammad_al_Tablaway_128kbps';
+        break;
+      case 'muhsin_qasim':
+        reciterDirectory = 'Muhsin_Al_Qasim_192kbps';
+        break;
+      case 'abdullaah_juhaynee':
+        reciterDirectory = 'Abdullaah_3awwaad_Al-Juhaynee_128kbps';
+        break;
+      case 'husary':
+        reciterDirectory = 'Husary_128kbps';
+        break;
+      case 'ghamadi':
+        reciterDirectory = 'Ghamadi_40kbps';
+        break;
+      case 'shuraim':
+        reciterDirectory = 'Saood_ash-Shuraym_128kbps';
+        break;
+      // Legacy support for full directory names (in case they're passed directly)
       case 'Abdul_Basit_Murattal_192kbps':
-        audioUrl = `https://everyayah.com/data/Abdul_Basit_Murattal_192kbps/${surahStr}${ayahStr}.mp3`;
-        break;
       case 'Abdullaah_3awwaad_Al-Juhaynee_128kbps':
-        audioUrl = `https://everyayah.com/data/Abdullaah_3awwaad_Al-Juhaynee_128kbps/${surahStr}${ayahStr}.mp3`;
-        break;
       case 'Abdullah_Basfar_192kbps':
-        audioUrl = `https://everyayah.com/data/Abdullah_Basfar_192kbps/${surahStr}${ayahStr}.mp3`;
-        break;
       case 'Abdurrahmaan_As-Sudais_192kbps':
-        audioUrl = `https://everyayah.com/data/Abdurrahmaan_As-Sudais_192kbps/${surahStr}${ayahStr}.mp3`;
-        break;
       case 'Abu_Bakr_Ash-Shaatree_128kbps':
-        audioUrl = `https://everyayah.com/data/Abu_Bakr_Ash-Shaatree_128kbps/${surahStr}${ayahStr}.mp3`;
-        break;
       case 'Ahmed_Neana_128kbps':
-        audioUrl = `https://everyayah.com/data/Ahmed_Neana_128kbps/${surahStr}${ayahStr}.mp3`;
-        break;
       case 'Ahmed_ibn_Ali_al-Ajamy_128kbps_ketaballah.net':
-        audioUrl = `https://everyayah.com/data/Ahmed_ibn_Ali_al-Ajamy_128kbps_ketaballah.net/${surahStr}${ayahStr}.mp3`;
-        break;
       case 'Akram_AlAlaqimy_128kbps':
-        audioUrl = `https://everyayah.com/data/Akram_AlAlaqimy_128kbps/${surahStr}${ayahStr}.mp3`;
-        break;
       case 'Ali_Hajjaj_AlSuesy_128kbps':
-        audioUrl = `https://everyayah.com/data/Ali_Hajjaj_AlSuesy_128kbps/${surahStr}${ayahStr}.mp3`;
-        break;
       case 'Hani_Rifai_192kbps':
-        audioUrl = `https://everyayah.com/data/Hani_Rifai_192kbps/${surahStr}${ayahStr}.mp3`;
-        break;
       case 'Hudhaify_128kbps':
-        audioUrl = `https://everyayah.com/data/Hudhaify_128kbps/${surahStr}${ayahStr}.mp3`;
-        break;
       case 'Khaalid_Abdullaah_al-Qahtaanee_192kbps':
-        audioUrl = `https://everyayah.com/data/Khaalid_Abdullaah_al-Qahtaanee_192kbps/${surahStr}${ayahStr}.mp3`;
-        break;
       case 'Minshawy_Murattal_128kbps':
-        audioUrl = `https://everyayah.com/data/Minshawy_Murattal_128kbps/${surahStr}${ayahStr}.mp3`;
-        break;
       case 'Mohammad_al_Tablaway_128kbps':
-        audioUrl = `https://everyayah.com/data/Mohammad_al_Tablaway_128kbps/${surahStr}${ayahStr}.mp3`;
-        break;
       case 'Muhsin_Al_Qasim_192kbps':
-        audioUrl = `https://everyayah.com/data/Muhsin_Al_Qasim_192kbps/${surahStr}${ayahStr}.mp3`;
+        reciterDirectory = reciter; // Use as-is if it's already a full directory name
         break;
       default:
-        audioUrl = `https://everyayah.com/data/Abdul_Basit_Murattal_192kbps/${surahStr}${ayahStr}.mp3`;
+        reciterDirectory = 'Abdul_Basit_Murattal_192kbps';
     }
+    
+    // Construct audio URL
+    const surahStr = surah.toString().padStart(3, '0');
+    const ayahStr = ayah.toString().padStart(3, '0');
+    const audioUrl = `https://everyayah.com/data/${reciterDirectory}/${surahStr}${ayahStr}.mp3`;
     
     res.json({ audioUrl });
   } catch (error) {

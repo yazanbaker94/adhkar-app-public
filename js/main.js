@@ -1,11 +1,3 @@
-
-
-
-
-
-
-
-  // Dark mode functionality
         function initDarkMode() {
             const darkModeToggle = document.getElementById('darkModeToggle');
             const html = document.documentElement;
@@ -297,7 +289,6 @@ const surahNamesEnglish = [
   "Al-Qari'ah", "At-Takathur", "Al-Asr", "Al-Humazah", "Al-Fil", "Quraysh", "Al-Ma'un", "Al-Kawthar", "Al-Kafirun", "An-Nasr",
   "Al-Masad", "Al-Ikhlas", "Al-Falaq", "An-Nas"
 ];
-
 // Add these new variables at the top with other variables
 let isReadingMode = false;
 let isTranslationVisible = true;
@@ -307,11 +298,9 @@ let readingModeAyahs = [];
 // Add these variables at the top with other variables
 let isTafsirVisible = false;
 let tafsirData = null;
-
 // Add these variables at the top with other variables
 let currentAudioSurah = null;
 let currentAudioAyah = null;
-
 // Reading progress variables
 let progressBarVisible = false;
 let scrollTimeout = null;
@@ -911,7 +900,6 @@ let scrollTimeout = null;
           const hadithIndex = (dayOfMonth - 1) % dailyHadiths.length; // Convert to 0-based index and cycle through array
           return dailyHadiths[hadithIndex];
       }
-
              // Function to update the daily reminder with today's hadith
        function updateDailyReminder() {
            const todaysHadith = getTodaysHadith();
@@ -961,15 +949,15 @@ let scrollTimeout = null;
                localStorage.setItem('preferredLanguage', currentLang);
            }
            
-           tafsirLang = currentLang;
-           document.documentElement.lang = currentLang;
-           document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
-           
-           // Set initial search input placeholder
-           const searchInput = document.getElementById('quranSearchInput');
-           if (searchInput) {
-               searchInput.placeholder = currentLang === 'ar' ? 'البحث في القرآن' : 'Search Quran';
-           }
+               tafsirLang = currentLang;
+               document.documentElement.lang = currentLang;
+               document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+               
+               // Set initial search input placeholder
+               const searchInput = document.getElementById('quranSearchInput');
+               if (searchInput) {
+                   searchInput.placeholder = currentLang === 'ar' ? 'البحث في القرآن' : 'Search Quran';
+               }
            
            // Set initial surah search input placeholder
            const surahSearchInput = document.getElementById('surahSearchInput');
@@ -1691,8 +1679,6 @@ let scrollTimeout = null;
               autoSwipeDesc: "Automatically moves to next dhikr when completed"
           }
       };
-
-
       // Enhanced prayer times function that can work with coordinates or city
       async function fetchPrayerTimes(cityOrCoords = "Amman", coordinates = null) {
           const today = new Date().toISOString().split('T')[0];
@@ -2153,7 +2139,6 @@ let scrollTimeout = null;
               modal.classList.add('hidden');
           }
       }
-      
       // Update compass UI elements when language changes
       function updateCompassUI() {
           const directionStatus = document.getElementById('directionStatus');
@@ -2468,16 +2453,6 @@ function showARUnsupported(errorType) {
     // For backward compatibility, just show a simple error
     showCompassError(currentLang === 'ar' ? 'حدث خطأ في البوصلة' : 'Compass error occurred');
 }
-
-      // Legacy functions for compatibility
-      function showCalibrationPrompt() {
-          // No longer needed with simple compass
-      }
-
-      function dismissCalibrationPrompt() {
-          // No longer needed with simple compass
-      }
-
       // Legacy function for compatibility
       function initCompassFallback() {
           initQiblaCompass();
@@ -2712,7 +2687,7 @@ function showARUnsupported(errorType) {
           }
       }
 
-      function switchLanguage() {
+      async function switchLanguage() {
           currentLang = currentLang === 'ar' ? 'en' : 'ar';
           tafsirLang = currentLang;
           
@@ -2723,10 +2698,10 @@ function showARUnsupported(errorType) {
           document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
           
           // Use setTimeout to ensure DOM updates are processed
-          setTimeout(() => {
+          setTimeout(async () => {
           updateUI();
           updateSettingsLanguage();
-              updateReciterOptions();
+              await updateReciterOptions();
           displayDhikr();
           updatePrayerTimesUI();
           updatePrayerTimeFormat(); // Update prayer time format with new language
@@ -3090,7 +3065,6 @@ function showARUnsupported(errorType) {
               showToast(currentLang === 'ar' ? 'حدث خطأ في تحميل الترجمة' : 'Error loading translation', 'error');
           }
       }
-
       function updateSurahDropdown() {
           // Update surah menu button text
           const selectedSurahText = document.getElementById('selectedSurahText');
@@ -3263,14 +3237,12 @@ function showARUnsupported(errorType) {
               displayDhikr();
           }
       }
-
       function prevDhikr() {
           if (current > 0) {
               current--;
               displayDhikr();
           }
       }
-
       function goHome() {
           // Immediate transition without animation delay
           const adhkarViewElement = document.getElementById('adhkarView');
@@ -3279,7 +3251,6 @@ function showARUnsupported(errorType) {
           adhkarViewElement.classList.add('hidden');
           homeElement.classList.remove('hidden');
       }
-
       // Toggle functions for pronunciation and translation
       function toggleTransliteration() {
           const section = document.getElementById('transliterationSection');
@@ -4265,7 +4236,6 @@ function showARUnsupported(errorType) {
               fetchPrayerTimes(currentCity);
           }, 60 * 60 * 1000); // Every hour
       }
-
       // Add these functions to handle the tutorial
       function showTutorial() {
           // Basic iOS detection
@@ -4375,7 +4345,6 @@ function showARUnsupported(errorType) {
         'en-maarif': { slug: 'en-tafsir-maarif-ul-quran', name: 'Ma\'ariful Quran (English)', language: 'en', api: 'spa5k' },
         'en-tazkirul': { slug: 'en-tazkirul-quran', name: 'Tazkirul Quran (English)', language: 'en', api: 'spa5k' }
       };
-
              // Update getTafsirForAyah to fetch per-ayah tafsir using multiple APIs
        async function getTafsirForAyah(surah, ayah, tafsirSource = null) {
          const source = tafsirSource || currentTafsirSource;
@@ -5123,7 +5092,6 @@ function showARUnsupported(errorType) {
           }
         }, 100);
       }
-
       // In toggleReadingMode, call displayReadingModeAyahs(true) when entering reading mode, otherwise false
       function toggleReadingMode() {
           const wasReadingMode = isReadingMode;
@@ -5185,7 +5153,6 @@ function showARUnsupported(errorType) {
               }
           }
       }
-
       function bookmarkAyah(surah, ayah) {
           if ((surah === null || surah === undefined) || !quranData) return;      
           // Convert surah and ayah to numbers to ensure proper comparison
@@ -5611,6 +5578,9 @@ function showARUnsupported(errorType) {
             // Update main tab language after loading preference
             updateMainTabLanguage();
             
+            // Update video language immediately after loading preference
+            updateVideoLanguage();
+            
             tafsirLang = currentLang;
 
             const adhkarView = document.getElementById('adhkarView');
@@ -5636,7 +5606,6 @@ function showARUnsupported(errorType) {
             
             // Initialize Tasbih
             loadTasbihState();
-            
 
 
             // Try to load saved prayer times first
@@ -5717,7 +5686,7 @@ function showARUnsupported(errorType) {
             initializeURLHandling();
             
             // Initialize font settings
-            initializeFontSettings();
+            await initializeFontSettings();
             
             // Update settings language
             updateSettingsLanguage();
@@ -6160,7 +6129,7 @@ function showARUnsupported(errorType) {
         }
 
         // Initialize font family radio buttons
-        function initializeFontSettings() {
+        async function initializeFontSettings() {
             const fontRadios = document.querySelectorAll('input[name="fontFamily"]');
             const savedFont = localStorage.getItem('quranFontFamily') || 'font-quran-original';
             
@@ -6212,21 +6181,25 @@ function showARUnsupported(errorType) {
             changeFontFamily(savedFont);
             
             // Initialize other settings
-            initializeAudioSettings();
+            await initializeAudioSettings();
         }
 
 
 
         // Audio Settings Functions
-        let currentReciter = 'ar.alafasy';
+        let currentReciter = 'alafasy';
         let currentPlaybackSpeed = 1;
         let isContinuousPlayEnabled = false;
 
 
-        function initializeAudioSettings() {
+        async function initializeAudioSettings() {
             // Initialize reciter
-            const savedReciter = localStorage.getItem('quranReciter') || 'ar.alafasy';
+            const savedReciter = localStorage.getItem('quranReciter') || 'alafasy';
             currentReciter = savedReciter;
+            
+            // Load reciters from API first
+            await updateReciterOptions();
+            
             const reciterSelect = document.getElementById('reciterSelect');
             if (reciterSelect) {
                 reciterSelect.value = savedReciter;
@@ -6234,18 +6207,13 @@ function showARUnsupported(errorType) {
                     currentReciter = this.value;
                     localStorage.setItem('quranReciter', this.value);
                     
-                    // Show feedback about reciter change
-                    const reciterNames = {
-                        'ar.alafasy': currentLang === 'ar' ? 'مشاري العفاسي' : 'Mishary Al-Afasy',
-                        'ar.husary': currentLang === 'ar' ? 'محمود خليل الحصري' : 'Mahmoud Khalil Al-Husary',
-                        'ar.minshawi': currentLang === 'ar' ? 'محمد صديق المنشاوي' : 'Mohamed Siddiq Al-Minshawi',
-                        'ar.sudais': currentLang === 'ar' ? 'عبد الرحمن السديس' : 'Abdul Rahman As-Sudais',
-                        'ar.shuraim': currentLang === 'ar' ? 'سعود الشريم' : 'Saud Ash-Shuraim'
-                    };
+                    // Show feedback about reciter change - get name from selected option
+                    const selectedOption = this.options[this.selectedIndex];
+                    const reciterName = selectedOption ? selectedOption.textContent : this.value;
                     
                     const message = currentLang === 'ar' ? 
-                        `تم اختيار القارئ: ${reciterNames[this.value]}` : 
-                        `Reciter selected: ${reciterNames[this.value]}`;
+                        `تم اختيار القارئ: ${reciterName}` : 
+                        `Reciter selected: ${reciterName}`;
                     
                     showToast(message, 'success');
                 });
@@ -6403,51 +6371,71 @@ function showARUnsupported(errorType) {
         }
 
         // Function to update reciter dropdown options based on current language
-        function updateReciterOptions() {
+        async function updateReciterOptions() {
             const reciterSelect = document.getElementById('reciterSelect');
             if (!reciterSelect) return;
 
             // Store the current selection
             const currentSelection = reciterSelect.value;
             
-            // Reciter names for both languages
-            const reciterOptions = {
-                'ar.alafasy': {
-                    ar: 'مشاري العفاسي',
-                    en: 'Mishary Al-Afasy'
-                },
-                'ar.husary': {
-                    ar: 'محمود خليل الحصري',
-                    en: 'Mahmoud Khalil Al-Husary'
-                },
-                'ar.minshawi': {
-                    ar: 'محمد صديق المنشاوي',
-                    en: 'Mohamed Siddiq Al-Minshawi'
-                },
-                'ar.sudais': {
-                    ar: 'عبد الرحمن السديس',
-                    en: 'Abdul Rahman As-Sudais'
-                },
-                'ar.shuraim': {
-                    ar: 'سعود الشريم',
-                    en: 'Saud Ash-Shuraim'
+            try {
+                // Load reciters from API
+                const apiBaseUrl = getApiBaseUrl();
+                const response = await fetch(`${apiBaseUrl}/api/reciters`);
+                const reciters = await response.json();
+                
+                // Clear current options
+                reciterSelect.innerHTML = '';
+
+                // Add options with appropriate language
+                reciters.forEach(reciter => {
+                    const option = document.createElement('option');
+                    option.value = reciter.id;
+                    option.textContent = currentLang === 'ar' ? reciter.nameAr : reciter.name;
+                    reciterSelect.appendChild(option);
+                });
+
+                // Restore the previous selection if it exists in new options
+                if (currentSelection && reciters.some(r => r.id === currentSelection)) {
+                    reciterSelect.value = currentSelection;
+                } else if (reciters.length > 0) {
+                    // Default to first reciter if previous selection not found
+                    reciterSelect.value = reciters[0].id;
+                    currentReciter = reciters[0].id;
+                    localStorage.setItem('quranReciter', reciters[0].id);
                 }
-            };
+                
+            } catch (error) {
+                console.error('Error loading reciters from API:', error);
+                
+                // Fallback to hardcoded reciters
+                const fallbackReciters = [
+                    { id: 'alafasy', name: 'Mishary Rashid Alafasy', nameAr: 'مشاري راشد العفاسي' },
+                    { id: 'husary', name: 'Mahmoud Khalil Al-Husary', nameAr: 'محمود خليل الحصري' },
+                    { id: 'minshawy', name: 'Muhammad Siddiq Al-Minshawi', nameAr: 'محمد صديق المنشاوي' },
+                    { id: 'sudais', name: 'Abdur-Rahman As-Sudais', nameAr: 'عبد الرحمن السديس' },
+                    { id: 'shuraim', name: 'Saud Al-Shuraim', nameAr: 'سعود الشريم' }
+                ];
 
-            // Clear current options
-            reciterSelect.innerHTML = '';
+                // Clear current options
+                reciterSelect.innerHTML = '';
 
-            // Add options with appropriate language
-            Object.keys(reciterOptions).forEach(value => {
-                const option = document.createElement('option');
-                option.value = value;
-                option.textContent = reciterOptions[value][currentLang];
-                reciterSelect.appendChild(option);
-            });
+                // Add fallback options
+                fallbackReciters.forEach(reciter => {
+                    const option = document.createElement('option');
+                    option.value = reciter.id;
+                    option.textContent = currentLang === 'ar' ? reciter.nameAr : reciter.name;
+                    reciterSelect.appendChild(option);
+                });
 
-            // Restore the previous selection
-            if (currentSelection) {
-                reciterSelect.value = currentSelection;
+                // Restore the previous selection if it exists in fallback options
+                if (currentSelection && fallbackReciters.some(r => r.id === currentSelection)) {
+                    reciterSelect.value = currentSelection;
+                } else if (fallbackReciters.length > 0) {
+                    reciterSelect.value = fallbackReciters[0].id;
+                    currentReciter = fallbackReciters[0].id;
+                    localStorage.setItem('quranReciter', fallbackReciters[0].id);
+                }
             }
         }
 
@@ -6522,8 +6510,6 @@ function showARUnsupported(errorType) {
                 }
             }
         }
-
-
         // Add a function to load Tafsir for a specific surah
         async function loadTafsirForSurah(surahNumber) {
             try {
@@ -6532,7 +6518,6 @@ function showARUnsupported(errorType) {
                 if (!response.ok) throw new Error('Failed to fetch Tafsir data');
                 const data = await response.json();
                 tafsirData[surahNumber - 1] = data; // Store with 0-based index
-              
             } catch (error) {
                 console.error('Error loading Tafsir data:', error);
                 showToast(currentLang === 'ar' ? 'حدث خطأ في تحميل التفسير' : 'Error loading Tafsir', 'error');
@@ -6666,7 +6651,6 @@ function showARUnsupported(errorType) {
             // Single DOM append operation
             surahList.appendChild(fragment);
         }
-        
         function selectSurah(surahIndex) {
             currentSurah = surahIndex;
                 currentAyah = 0;
@@ -6928,7 +6912,6 @@ function showARUnsupported(errorType) {
             
             return maxScore;
         }
-        
         // Generate comprehensive search term variants
         function generateComprehensiveSearchVariants(searchTerm) {
             const variants = new Set();
@@ -7435,7 +7418,6 @@ function showARUnsupported(errorType) {
             
             return Array.from(variants);
         }
-        
         // Calculate string match score
         function calculateStringMatchScore(search, target) {
             if (!search || !target) return 0;
@@ -7556,7 +7538,6 @@ function showARUnsupported(errorType) {
             
             return (commonChars / totalChars) * 150;
         }
-        
         // Levenshtein distance for fuzzy matching
         function levenshteinDistance(str1, str2) {
             const matrix = [];
@@ -8152,7 +8133,6 @@ function showARUnsupported(errorType) {
             });
             return closestId;
         }
-
         // Update playAyahAudio to toggle play/pause and handle interruptions with debounce
         function playAyahAudio(surah, ayah) {
             // Prevent multiple rapid clicks with a debounce flag
@@ -8179,15 +8159,29 @@ function showARUnsupported(errorType) {
             
             // Get selected reciter from settings
             const reciterMapping = {
-                'ar.alafasy': 'Alafasy_64kbps',
-                'ar.husary': 'Husary_64kbps',
-                'ar.minshawi': 'Minshawy_Murattal_128kbps',
-                'ar.sudais': 'Abdurrahmaan_As-Sudais_64kbps',
-                'ar.shuraim': 'Saood_ash-Shuraym_64kbps'
+                'alafasy': 'Alafasy_128kbps',
+                'husary': 'Husary_128kbps',
+                'minshawy': 'Minshawy_Murattal_128kbps',
+                'sudais': 'Abdurrahmaan_As-Sudais_192kbps',
+                'shuraim': 'Saood_ash-Shuraym_128kbps',
+                'abdul_basit': 'Abdul_Basit_Murattal_192kbps',
+                'abdullah_basfar': 'Abdullah_Basfar_192kbps',
+                'abu_bakr_shatri': 'Abu_Bakr_Ash-Shaatree_128kbps',
+                'ahmed_neana': 'Ahmed_Neana_128kbps',
+                'ahmed_ajamy': 'Ahmed_ibn_Ali_al-Ajamy_128kbps_ketaballah.net',
+                'akram_alaqimy': 'Akram_AlAlaqimy_128kbps',
+                'ali_hajjaj': 'Ali_Hajjaj_AlSuesy_128kbps',
+                'hani_rifai': 'Hani_Rifai_192kbps',
+                'hudhaify': 'Hudhaify_128kbps',
+                'khalid_qahtani': 'Khaalid_Abdullaah_al-Qahtaanee_192kbps',
+                'tablaway': 'Mohammad_al_Tablaway_128kbps',
+                'muhsin_qasim': 'Muhsin_Al_Qasim_192kbps',
+                'abdullaah_juhaynee': 'Abdullaah_3awwaad_Al-Juhaynee_128kbps',
+                'ghamadi': 'Ghamadi_40kbps'
             };
             
-            const selectedReciter = currentReciter || 'ar.alafasy';
-            const reciter = reciterMapping[selectedReciter] || 'Alafasy_64kbps';
+            const selectedReciter = currentReciter || 'alafasy';
+            const reciter = reciterMapping[selectedReciter] || 'Alafasy_128kbps';
             const url = `https://everyayah.com/data/${reciter}/${surahStr}${ayahStr}.mp3`;
             const audio = new Audio(url);
             console.log(url);   
@@ -8784,11 +8778,6 @@ function showARUnsupported(errorType) {
           document.getElementById('adhkarMenuModal').classList.add('hidden');
           loadAdhkar(section);
         }
-    
-
-      
-
-
 function updateAzkarTypeLabels() {
   const types = [
     ['Morning', 'sabah'],
@@ -8848,9 +8837,6 @@ window.switchLanguage = function() {
   origSwitchLanguage();
   updateAzkarTypeLabels();
 };
-      
-
-     
 (function() {
   let popover = document.getElementById('ayahMenuPopover');
   let lastAyahElem = null;
@@ -9337,7 +9323,6 @@ function normalizeiOSVoiceText(text) {
 
   return normalized;
 }
-
 // Enhanced voice search function for iOS Safari compatibility
 function performEnhancedVoiceSearch(transcript) {
 
@@ -9639,7 +9624,6 @@ function findBestSurahMatch(alternatives) {
   
   return bestMatch;
 }
-
 // Enhanced similarity calculation with phonetic matching
 function calculateSimilarity(str1, str2) {
   // Normalize Arabic text
@@ -9870,7 +9854,6 @@ function calculatePhoneticSimilarity(voiceInput, surahName) {
   
   return 0;
 }
-
 // Convert phonetically matched voice input to proper Surah name
 function convertPhoneticToSurahName(voiceInput) {
   const phoneticMappings = {
@@ -10381,7 +10364,6 @@ function updatePrayerSettingsLanguage() {
         addCustomAdhanToDropdown();
     }
 }
-
 function updatePrayerSettingsDropdowns() {
     console.log('=== UPDATE PRAYER SETTINGS DROPDOWNS CALLED ===');
     console.log('customAdhanData at start of function:', !!customAdhanData);
@@ -10507,7 +10489,6 @@ function updatePrayerSettingsDropdowns() {
     
     asrCalculationSelect.value = currentAsrCalculation;
 }
-
     // Initialize prayer settings event listeners
     function initializePrayerSettings() {
         // Add event listeners for settings changes
@@ -10711,7 +10692,6 @@ function loadPrayerOffsets() {
         }
     });
 }
-
     // Function to update prayer times display with offsets
     function updatePrayerTimesWithOffsets() {
         if (!prayerNotifications) return;
@@ -11139,7 +11119,6 @@ function loadPrayerOffsets() {
             return null;
         }
     }
-
     // Function to update URL with current verse for sharing
     function updateVerseURL() {
         if (currentSurah !== null && currentAyah !== null && quranData) {
@@ -11490,7 +11469,6 @@ function loadPrayerOffsets() {
         childList: true,
         subtree: true
     });
-
     // Video Generation Functions
     let videoGeneratorInitialized = false;
     let selectedVideoSurah = null;
@@ -11499,7 +11477,6 @@ function loadPrayerOffsets() {
     let selectedVideoReciter = null;
     let selectedBackground = null;
     let customBackgroundFile = null;
-
     // Initialize video generator
     function initializeVideoGenerator() {
         console.log('=== VIDEO GENERATOR INITIALIZATION START ===');
@@ -11583,14 +11560,26 @@ function loadPrayerOffsets() {
             const reciterSelect = document.getElementById('videoReciterSelect');
             console.log('loadVideoReciters: Found reciter select element:', !!reciterSelect);
             if (reciterSelect) {
-                reciterSelect.innerHTML = '<option value="">اختر القارئ</option>';
+                // Clear dropdown and add placeholder first
+                reciterSelect.innerHTML = '';
+                
+                // Add placeholder option
+                const placeholderOption = document.createElement('option');
+                placeholderOption.value = '';
+                placeholderOption.textContent = currentLang === 'ar' ? 'اختر القارئ' : 'Select Reciter';
+                reciterSelect.appendChild(placeholderOption);
+                
+                // Add actual reciters
                 reciters.forEach(reciter => {
                     const option = document.createElement('option');
                     option.value = reciter.id;
-                    option.textContent = reciter.name;
+                    // Use Arabic name if available and in Arabic mode, otherwise use English name
+                    option.textContent = (currentLang === 'ar' && reciter.nameAr) ? reciter.nameAr : reciter.name;
                     reciterSelect.appendChild(option);
                 });
                 console.log('loadVideoReciters: Added', reciters.length, 'reciters to dropdown');
+                // Update names to current language after loading
+                updateReciterNames();
             } else {
                 console.error('loadVideoReciters: Reciter select element not found!');
             }
@@ -11598,25 +11587,65 @@ function loadPrayerOffsets() {
             console.error('loadVideoReciters: Error loading reciters:', error);
             // Fallback to hardcoded reciters if server is not available
             const fallbackReciters = [
-                { id: 'abdul_basit', name: 'Abdul Basit Abdul Samad' },
-                { id: 'mishary_rashid', name: 'Mishary Rashid Alafasy' },
-                { id: 'sudais', name: 'Abdur-Rahman As-Sudais' },
-                { id: 'shuraim', name: 'Saud Al-Shuraim' },
-                { id: 'ghamdi', name: 'Saad Al-Ghamdi' },
-                { id: 'husary', name: 'Mahmoud Khalil Al-Husary' },
-                { id: 'muhammad_siddiq', name: 'Muhammad Siddiq Al-Minshawi' }
+                { 
+                    id: 'abdul_basit', 
+                    name: 'Abdul Basit Abdul Samad',
+                    nameAr: 'عبد الباسط عبد الصمد'
+                },
+                { 
+                    id: 'mishary_rashid', 
+                    name: 'Mishary Rashid Alafasy',
+                    nameAr: 'مشاري بن راشد العفاسي'
+                },
+                { 
+                    id: 'sudais', 
+                    name: 'Abdur-Rahman As-Sudais',
+                    nameAr: 'عبد الرحمن السديس'
+                },
+                { 
+                    id: 'shuraim', 
+                    name: 'Saud Al-Shuraim',
+                    nameAr: 'سعود الشريم'
+                },
+                { 
+                    id: 'ghamdi', 
+                    name: 'Saad Al-Ghamdi',
+                    nameAr: 'سعد الغامدي'
+                },
+                { 
+                    id: 'husary', 
+                    name: 'Mahmoud Khalil Al-Husary',
+                    nameAr: 'محمود خليل الحصري'
+                },
+                { 
+                    id: 'muhammad_siddiq', 
+                    name: 'Muhammad Siddiq Al-Minshawi',
+                    nameAr: 'محمد صديق المنشاوي'
+                }
             ];
             
             const reciterSelect = document.getElementById('videoReciterSelect');
             if (reciterSelect) {
-                reciterSelect.innerHTML = '<option value="">اختر القارئ</option>';
+                // Clear dropdown and add placeholder first
+                reciterSelect.innerHTML = '';
+                
+                // Add placeholder option
+                const placeholderOption = document.createElement('option');
+                placeholderOption.value = '';
+                placeholderOption.textContent = currentLang === 'ar' ? 'اختر القارئ' : 'Select Reciter';
+                reciterSelect.appendChild(placeholderOption);
+                
+                // Add fallback reciters
                 fallbackReciters.forEach(reciter => {
                     const option = document.createElement('option');
                     option.value = reciter.id;
-                    option.textContent = reciter.name;
+                    // Use Arabic name if in Arabic mode, otherwise use English name
+                    option.textContent = currentLang === 'ar' ? reciter.nameAr : reciter.name;
                     reciterSelect.appendChild(option);
                 });
                 console.log('loadVideoReciters: Added fallback reciters');
+                // Update names to current language after loading
+                updateReciterNames();
             }
         }
     }
@@ -11635,11 +11664,13 @@ function loadPrayerOffsets() {
             console.log('loadVideoFonts: Found font select element:', !!fontSelect);
             
             if (fontSelect && fonts && fonts.length > 0) {
-                fontSelect.innerHTML = '<option value="">اختر نوع الخط</option>';
+                // Clear dropdown and add only actual fonts (no placeholder)
+                fontSelect.innerHTML = '';
                 fonts.forEach(font => {
                     const option = document.createElement('option');
                     option.value = font.family;
-                    option.textContent = font.name;
+                    // Use Arabic name if available and in Arabic mode, otherwise use English name
+                    option.textContent = (currentLang === 'ar' && font.nameAr) ? font.nameAr : font.name;
                     fontSelect.appendChild(option);
                 });
                 console.log('loadVideoFonts: Added', fonts.length, 'fonts to dropdown');
@@ -11647,6 +11678,8 @@ function loadPrayerOffsets() {
                 // Set default font
                 fontSelect.value = 'Uthmanic Hafs';
                 updateFontPreview();
+                // Update names to current language after loading
+                updateFontNames();
             } else {
                 console.error('loadVideoFonts: Font select element not found or no fonts received!');
             }
@@ -11654,22 +11687,34 @@ function loadPrayerOffsets() {
             console.error('loadVideoFonts: Error loading fonts:', error);
             // Add fallback fonts - only keeping Al Mushaf and Uthmanic Hafs (old)
             const fallbackFonts = [
-                { family: 'Uthmanic Hafs', name: 'Uthmanic Hafs (Old)' },
-                { family: 'Al Mushaf', name: 'Al Mushaf' }
+                { 
+                    family: 'Uthmanic Hafs', 
+                    name: 'Uthmanic Hafs (Old)',
+                    nameAr: 'الخط العثماني حفص (قديم)'
+                },
+                { 
+                    family: 'Al Mushaf', 
+                    name: 'Al Mushaf',
+                    nameAr: 'خط المصحف'
+                }
             ];
             
             const fontSelect = document.getElementById('videoFontFamily');
             if (fontSelect) {
-                fontSelect.innerHTML = '<option value="">اختر نوع الخط</option>';
+                // Clear dropdown and add only actual fonts (no placeholder)
+                fontSelect.innerHTML = '';
                 fallbackFonts.forEach(font => {
                     const option = document.createElement('option');
                     option.value = font.family;
-                    option.textContent = font.name;
+                    // Use Arabic name if in Arabic mode, otherwise use English name
+                    option.textContent = currentLang === 'ar' ? font.nameAr : font.name;
                     fontSelect.appendChild(option);
                 });
                 fontSelect.value = 'Uthmanic Hafs';
                 updateFontPreview();
                 console.log('loadVideoFonts: Added fallback fonts');
+                // Update names to current language after loading
+                updateFontNames();
             }
         }
     }
@@ -11695,7 +11740,6 @@ function loadPrayerOffsets() {
             console.log('Updated font preview to:', selectedFont, '→', systemFontNames);
         }
     }
-
     // Update orientation preview
     function updateOrientationPreview() {
         const orientationSelect = document.getElementById('videoOrientation');
@@ -12200,10 +12244,10 @@ function loadPrayerOffsets() {
             const audioUrl = selectedVideoAyahTo 
             ? `${apiBaseUrl}/api/verse-audio-range/${selectedVideoSurah}/${selectedVideoAyah}/${selectedVideoAyahTo}/${selectedVideoReciter}`
             : `${apiBaseUrl}/api/verse-audio/${selectedVideoSurah}/${selectedVideoAyah}/${selectedVideoReciter}`;
-        
+            console.log('audioUrl:', audioUrl);
         const response = await fetch(audioUrl);
             const data = await response.json();
-            
+            console.log('data:', data);
             const audio = new Audio(data.audioUrl);
             audio.play();
             
@@ -12213,7 +12257,6 @@ function loadPrayerOffsets() {
             showToast(currentLang === 'ar' ? 'فشل في تشغيل الصوت' : 'Failed to play audio', 'error');
         }
     }
-
     // Debounce function for preview generation
     let previewTimeout;
     function debounce(func, wait) {
@@ -12226,7 +12269,6 @@ function loadPrayerOffsets() {
             previewTimeout = setTimeout(later, wait);
         };
     }
-
     // Generate real-time video preview
     async function generateLivePreview() {
         const preview = document.getElementById('videoPreview');
@@ -12339,7 +12381,6 @@ function loadPrayerOffsets() {
             }, 2000);
         }
     }
-
     // Web-based preview (fallback)
     function updateWebPreview() {
         const preview = document.getElementById('videoPreview');
@@ -12699,7 +12740,7 @@ function loadPrayerOffsets() {
             'surahLabel': currentLang === 'ar' ? 'السورة' : 'Surah',
             'ayahFromLabel': currentLang === 'ar' ? 'من الآية' : 'From Verse',
             'ayahToLabel': currentLang === 'ar' ? 'إلى الآية' : 'To Verse',
-            'reciterLabel': currentLang === 'ar' ? 'القارئ' : 'Reciter',
+            'videoReciterLabel': currentLang === 'ar' ? 'القارئ' : 'Reciter',
             'backgroundTitle': currentLang === 'ar' ? 'خلفية الفيديو' : 'Video Background',
             
             // Style settings
@@ -12718,7 +12759,6 @@ function loadPrayerOffsets() {
             'successTitle': currentLang === 'ar' ? 'تم إنشاء الفيديو بنجاح!' : 'Video generated successfully!',
             'previewAudioText': currentLang === 'ar' ? 'استمع للآية' : 'Preview Audio'
         };
-
         Object.entries(elements).forEach(([id, text]) => {
             const element = document.getElementById(id);
             if (element) {
@@ -12741,8 +12781,13 @@ function loadPrayerOffsets() {
         // Update select placeholders and reload surah dropdown with correct language
         const videoSurahSelect = document.getElementById('videoSurahSelect');
         if (videoSurahSelect) {
-            // Set direction based on language
-            videoSurahSelect.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+            // Always set direction to LTR for dropdowns in English, RTL only for Arabic
+            const newDir = currentLang === 'ar' ? 'rtl' : 'ltr';
+            const newAlign = currentLang === 'ar' ? 'right' : 'left';
+            videoSurahSelect.setAttribute('dir', newDir);
+            videoSurahSelect.style.direction = newDir;
+            videoSurahSelect.style.textAlign = newAlign;
+            console.log(`Setting videoSurahSelect direction to: ${newDir}, textAlign to: ${newAlign}, currentLang: ${currentLang}`);
             if (videoSurahSelect.options[0]) {
                 videoSurahSelect.options[0].textContent = currentLang === 'ar' ? 'اختر السورة' : 'Select Surah';
             }
@@ -12759,8 +12804,13 @@ function loadPrayerOffsets() {
 
         const videoAyahSelect = document.getElementById('videoAyahSelect');
         if (videoAyahSelect) {
-            // Set direction based on language
-            videoAyahSelect.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+            // Set direction to LTR for English, RTL for Arabic
+            const newDir = currentLang === 'ar' ? 'rtl' : 'ltr';
+            const newAlign = currentLang === 'ar' ? 'right' : 'left';
+            videoAyahSelect.setAttribute('dir', newDir);
+            videoAyahSelect.style.direction = newDir;
+            videoAyahSelect.style.textAlign = newAlign;
+            console.log(`Setting videoAyahSelect direction to: ${newDir}, textAlign to: ${newAlign}`);
             if (videoAyahSelect.options[0]) {
                 videoAyahSelect.options[0].textContent = currentLang === 'ar' ? 'اختر الآية' : 'Select Verse';
             }
@@ -12777,8 +12827,13 @@ function loadPrayerOffsets() {
 
         const videoAyahToSelect = document.getElementById('videoAyahToSelect');
         if (videoAyahToSelect) {
-            // Set direction based on language
-            videoAyahToSelect.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+            // Set direction to LTR for English, RTL for Arabic
+            const newDir = currentLang === 'ar' ? 'rtl' : 'ltr';
+            const newAlign = currentLang === 'ar' ? 'right' : 'left';
+            videoAyahToSelect.setAttribute('dir', newDir);
+            videoAyahToSelect.style.direction = newDir;
+            videoAyahToSelect.style.textAlign = newAlign;
+            console.log(`Setting videoAyahToSelect direction to: ${newDir}, textAlign to: ${newAlign}`);
             if (videoAyahToSelect.options[0]) {
                 videoAyahToSelect.options[0].textContent = currentLang === 'ar' ? 'آية واحدة' : 'Single Verse';
             }
@@ -12791,26 +12846,40 @@ function loadPrayerOffsets() {
 
         const videoReciterSelect = document.getElementById('videoReciterSelect');
         if (videoReciterSelect) {
-            // Set direction based on language
-            videoReciterSelect.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
-            if (videoReciterSelect.options[0]) {
+            // Set direction to LTR for English, RTL for Arabic
+            const newDir = currentLang === 'ar' ? 'rtl' : 'ltr';
+            const newAlign = currentLang === 'ar' ? 'right' : 'left';
+            videoReciterSelect.setAttribute('dir', newDir);
+            videoReciterSelect.style.direction = newDir;
+            videoReciterSelect.style.textAlign = newAlign;
+            console.log(`Setting videoReciterSelect direction to: ${newDir}, textAlign to: ${newAlign}`);
+            
+            // Update placeholder text for reciter dropdown
+            if (videoReciterSelect.options.length > 0 && videoReciterSelect.options[0].value === '') {
                 videoReciterSelect.options[0].textContent = currentLang === 'ar' ? 'اختر القارئ' : 'Select Reciter';
             }
         }
 
         const videoFontFamily = document.getElementById('videoFontFamily');
         if (videoFontFamily) {
-            // Set direction based on language
-            videoFontFamily.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
-            if (videoFontFamily.options[0]) {
-                videoFontFamily.options[0].textContent = currentLang === 'ar' ? 'اختر نوع الخط' : 'Select Font';
-            }
+            // Set direction to LTR for English, RTL for Arabic
+            const newDir = currentLang === 'ar' ? 'rtl' : 'ltr';
+            const newAlign = currentLang === 'ar' ? 'right' : 'left';
+            videoFontFamily.setAttribute('dir', newDir);
+            videoFontFamily.style.direction = newDir;
+            videoFontFamily.style.textAlign = newAlign;
+            console.log(`Setting videoFontFamily direction to: ${newDir}, textAlign to: ${newAlign}`);
         }
 
         const videoOrientation = document.getElementById('videoOrientation');
         if (videoOrientation) {
-            // Set direction based on language
-            videoOrientation.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+            // Set direction to LTR for English, RTL for Arabic
+            const newDir = currentLang === 'ar' ? 'rtl' : 'ltr';
+            const newAlign = currentLang === 'ar' ? 'right' : 'left';
+            videoOrientation.setAttribute('dir', newDir);
+            videoOrientation.style.direction = newDir;
+            videoOrientation.style.textAlign = newAlign;
+            console.log(`Setting videoOrientation direction to: ${newDir}, textAlign to: ${newAlign}`);
         }
 
         // Update selected verse text placeholder
@@ -12836,10 +12905,111 @@ function loadPrayerOffsets() {
             });
         }
 
+        // Update reciter names based on language (with slight delay to ensure DOM is ready)
+        setTimeout(() => {
+            updateReciterNames();
+            updateFontNames();
+        }, 100);
+        
         // Update orientation preview after language change
         updateOrientationPreview();
     }
 
+    // Update reciter names in dropdown based on current language
+    function updateReciterNames() {
+        const reciterSelect = document.getElementById('videoReciterSelect');
+        if (!reciterSelect) {
+            console.log('updateReciterNames: reciterSelect not found');
+            return;
+        }
+        
+        console.log('updateReciterNames: Found reciterSelect with', reciterSelect.options.length, 'options');
+        
+        // Update placeholder option first (if it exists)
+        if (reciterSelect.options.length > 0 && reciterSelect.options[0].value === '') {
+            reciterSelect.options[0].textContent = currentLang === 'ar' ? 'اختر القارئ' : 'Select Reciter';
+        }
+        
+        // Update each option's text content based on current language
+        Array.from(reciterSelect.options).forEach(option => {
+            const reciterId = option.value;
+            if (!reciterId) return; // Skip placeholder option
+            
+            // Get the reciter data from the API response (stored in a global variable or reload from API)
+            // For now, we'll use a simple mapping approach
+            const reciterNames = {
+                'abdul_basit': { en: 'Abdul Basit Abdul Samad', ar: 'عبد الباسط عبد الصمد' },
+                'alafasy': { en: 'Mishary Rashid Alafasy', ar: 'مشاري راشد العفاسي' },
+                'sudais': { en: 'Abdur-Rahman As-Sudais', ar: 'عبد الرحمن السديس' },
+                'abdullah_basfar': { en: 'Abdullah Basfar', ar: 'عبد الله بصفر' },
+                'abu_bakr_shatri': { en: 'Abu Bakr Ash-Shaatree', ar: 'أبو بكر الشاطري' },
+                'ahmed_neana': { en: 'Ahmed Neana', ar: 'أحمد نعنا' },
+                'ahmed_ajamy': { en: 'Ahmed ibn Ali al-Ajamy', ar: 'أحمد بن علي العجمي' },
+                'akram_alaqimy': { en: 'Akram AlAlaqimy', ar: 'أكرم العلاقمي' },
+                'ali_hajjaj': { en: 'Ali Hajjaj AlSuesy', ar: 'علي حجاج السويسي' },
+                'hani_rifai': { en: 'Hani Rifai', ar: 'هاني رفاعي' },
+                'hudhaify': { en: 'Ali Al-Hudhaify', ar: 'علي الحذيفي' },
+                'khalid_qahtani': { en: 'Khaalid Abdullaah al-Qahtaanee', ar: 'خالد عبد الله القحطاني' },
+                'minshawy': { en: 'Muhammad Siddiq Al-Minshawi', ar: 'محمد صديق المنشاوي' },
+                'tablaway': { en: 'Mohammad al-Tablaway', ar: 'محمد الطبلاوي' },
+                'muhsin_qasim': { en: 'Muhsin Al Qasim', ar: 'محسن القاسم' },
+                'abdullaah_juhaynee': { en: 'Abdullaah 3awwaad Al-Juhaynee', ar: 'عبد الله عواد الجهني' },
+                'husary': { en: 'Mahmoud Khalil Al-Husary', ar: 'محمود خليل الحصري' },
+                'ghamadi': { en: 'Saad Al-Ghamdi', ar: 'سعد الغامدي' },
+                'shuraim': { en: 'Saud Al-Shuraim', ar: 'سعود الشريم' }
+            };
+            
+            const reciter = reciterNames[reciterId];
+            if (reciter) {
+                const newText = currentLang === 'ar' ? reciter.ar : reciter.en;
+                option.textContent = newText;
+                console.log(`Updated reciter ${reciterId} to: ${newText}`);
+            } else {
+                console.log('No mapping found for reciter ID:', reciterId);
+            }
+        });
+        
+        console.log('Updated reciter names to:', currentLang);
+    }
+    // Update font names in dropdown based on current language
+    function updateFontNames() {
+        const fontSelect = document.getElementById('videoFontFamily');
+        if (!fontSelect) {
+            console.log('updateFontNames: fontSelect not found');
+            return;
+        }
+        
+        console.log('updateFontNames: Found fontSelect with', fontSelect.options.length, 'options');
+        
+        // Define font names mapping
+        const fontNames = {
+            'Uthmanic Hafs': {
+                en: 'Uthmanic Hafs (Old)',
+                ar: 'الخط العثماني حفص (قديم)'
+            },
+            'Al Mushaf': {
+                en: 'Al Mushaf',
+                ar: 'خط المصحف'
+            }
+        };
+        
+        // Update each option's text content
+        Array.from(fontSelect.options).forEach(option => {
+            const fontFamily = option.value;
+            console.log('Processing font option:', fontFamily, 'current text:', option.textContent);
+            if (fontNames[fontFamily]) {
+                const newText = currentLang === 'ar' ? 
+                    fontNames[fontFamily].ar : 
+                    fontNames[fontFamily].en;
+                option.textContent = newText;
+                console.log('Updated to:', newText);
+            } else {
+                console.log('No mapping found for font:', fontFamily);
+            }
+        });
+        
+        console.log('Updated font names to:', currentLang);
+    }
     // Update main tab language
     function updateMainTabLanguage() {
         const tabElements = {
@@ -12884,4 +13054,3 @@ function loadPrayerOffsets() {
             }
         }
     }
-

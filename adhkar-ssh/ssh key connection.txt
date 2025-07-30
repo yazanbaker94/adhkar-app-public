@@ -1,0 +1,8 @@
+connect: ssh -i C:\Users\Yazan\Desktop\adkhar-app\adhkar-ssh\ssh-key-2025-07-30.key ubuntu@40.233.105.79
+
+
+
+
+
+copy: 
+scp -i "C:\Users\Yazan\Desktop\adkhar-app\adhkar-ssh\ssh-key-2025-07-30.key" -r "C:\Users\Yazan\Desktop\adkhar-app-backend\backend.zip" ubuntu@40.233.105.79:~/

@@ -40,7 +40,7 @@
     <title>SakinahTime - سكينة</title>
     
     <!-- API Configuration: Uncomment and set this if your backend is on a different domain -->
-    <script>window.API_BASE_URL = 'https://adkar.zeabur.app';</script>
+    <script>window.API_BASE_URL = 'http://155.248.217.85:3000';</script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         // Configure Tailwind dark mode
@@ -373,11 +373,7 @@
                                     <div>
                                         <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300" id="reciterLabel">القارئ</label>
                                         <select id="reciterSelect" class="w-full p-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all duration-200 shadow-sm" style="background-image: none;">
-                                            <option value="ar.alafasy" class="text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-800">مشاري العفاسي</option>
-                                            <option value="ar.husary" class="text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-800">محمود خليل الحصري</option>
-                                            <option value="ar.minshawi" class="text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-800">محمد صديق المنشاوي</option>
-                                            <option value="ar.sudais" class="text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-800">عبد الرحمن السديس</option>
-                                            <option value="ar.shuraim" class="text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-800">سعود الشريم</option>
+                                            <!-- Reciter options will be loaded dynamically from API -->
                                         </select>
                                     </div>
                                     <div>
@@ -1814,7 +1810,7 @@
                     <div class="space-y-2">
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" id="surahLabel">
                             <i class="fas fa-book-quran text-purple-500 mr-1"></i>
-                            السورة
+                            Surah
                         </label>
                         <select id="videoSurahSelect" dir="ltr" class="w-full px-3 py-2.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 text-sm">
                             <option value="">Select Surah</option>
@@ -1824,13 +1820,13 @@
                     <!-- Ayah Range -->
                     <div class="grid grid-cols-2 gap-2">
                         <div class="space-y-2">
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" id="ayahFromLabel">من الآية</label>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" id="ayahFromLabel">From Verse</label>
                             <select id="videoAyahSelect" dir="ltr" class="w-full px-3 py-2.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 text-sm">
                                 <option value="">Select Verse</option>
                             </select>
                         </div>
                         <div class="space-y-2">
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" id="ayahToLabel">إلى الآية</label>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" id="ayahToLabel">To Verse</label>
                             <select id="videoAyahToSelect" dir="ltr" class="w-full px-3 py-2.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 text-sm">
                                 <option value="">Single Verse</option>
                             </select>
@@ -1851,9 +1847,9 @@
             <div id="audioTab" class="video-tab-content hidden space-y-4">
                 <!-- Reciter Selection -->
                 <div class="space-y-2">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" id="reciterLabel">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" id="videoReciterLabel">
                         <i class="fas fa-microphone text-blue-500 mr-1"></i>
-                        القارئ
+                        Reciter
                     </label>
                     <select id="videoReciterSelect" dir="ltr" class="w-full px-3 py-2.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
                         <option value="">Select Reciter</option>
@@ -1876,18 +1872,17 @@
                     <div class="space-y-3">
                         <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
                             <i class="fas fa-font text-orange-500"></i>
-                            <span id="fontSettingsTitle">إعدادات الخط</span>
+                            <span id="fontSettingsTitle">Font Settings</span>
                         </h4>
                         
                         <div class="space-y-2">
-                            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400" id="fontFamilyLabel">نوع الخط</label>
+                            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400" id="fontFamilyLabel">Font Family</label>
                             <select id="videoFontFamily" dir="ltr" class="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200 text-sm">
-                                <option value="">Select Font</option>
                             </select>
                         </div>
 
                         <div class="space-y-2">
-                            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400" id="fontSizeLabel">حجم الخط</label>
+                            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400" id="fontSizeLabel">Font Size</label>
                             <div class="flex items-center gap-2">
                                 <input type="range" id="videoFontSize" min="24" max="72" value="48" class="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider">
                                 <span class="text-xs font-mono bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-gray-600 dark:text-gray-400 min-w-[45px] text-center" id="fontSizeValue">48px</span>
@@ -1895,7 +1890,7 @@
                         </div>
 
                         <div class="space-y-2">
-                            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400" id="textColorLabel">لون النص</label>
+                            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400" id="textColorLabel">Text Color</label>
                             <input type="color" id="videoTextColor" value="#ffffff" class="w-full h-10 rounded-lg border border-gray-300 dark:border-gray-600 cursor-pointer">
                         </div>
                     </div>
@@ -1904,11 +1899,11 @@
                     <div class="space-y-3">
                         <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
                             <i class="fas fa-cog text-green-500"></i>
-                            <span id="videoSettingsTitle">إعدادات الفيديو</span>
+                            <span id="videoSettingsTitle">Video Settings</span>
                         </h4>
 
                         <div class="space-y-2">
-                            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400" id="orientationLabel">الاتجاه</label>
+                            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400" id="orientationLabel">Orientation</label>
                             <select id="videoOrientation" dir="ltr" class="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 text-sm">
                                 <option value="landscape" data-ar="أفقي - Landscape (1920x1080)" data-en="Landscape (1920x1080)">Landscape (1920x1080)</option>
                                 <option value="portrait" data-ar="عمودي - Portrait (1080x1920)" data-en="Portrait (1080x1920)">Portrait (1080x1920)</option>
