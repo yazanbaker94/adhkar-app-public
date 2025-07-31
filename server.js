@@ -7,6 +7,8 @@ const path = require('path');
 const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
 const { createCanvas, registerFont } = require('canvas');
+const https = require('https');
+
 
 
 // Register fonts with their correct internal names
@@ -52,7 +54,17 @@ try {
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const httpsOptions = {
+  key: fs.readFileSync('/etc/letsencrypt/live/api.sakinahtime.com/privkey.pem'),
+  cert: fs.readFileSync('/etc/letsencrypt/live/api.sakinahtime.com/fullchain.pem')
+};
 
+// Your middleware, routes, etc.
+// app.use(...)
+
+https.createServer(httpsOptions, app).listen(443, () => {
+  console.log('HTTPS Server running on port 443');
+});
 // Middleware - Configure CORS to allow your frontend domain
 app.use(cors({
   origin: [
