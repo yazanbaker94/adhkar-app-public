@@ -1681,26 +1681,63 @@ let scrollTimeout = null;
       };
       // Enhanced prayer times function that can work with coordinates or city
       async function fetchPrayerTimes(cityOrCoords = "Amman", coordinates = null) {
+          console.log('=== FETCH PRAYER TIMES CALLED ===');
+          console.log('City/Coords:', cityOrCoords);
+          console.log('Coordinates:', coordinates);
+          
           const today = new Date().toISOString().split('T')[0];
           const formattedDate = today.split('-').reverse().join('-');
           const city = typeof cityOrCoords === 'string' ? cityOrCoords : 'Unknown Location';
+          const calculationMethod = localStorage.getItem('calculationMethod') || '4';
+          const asrCalculation = localStorage.getItem('asrCalculation') || 'shafi';
+          const shafaqMethod = localStorage.getItem('shafaqMethod') || 'general';
+          
           const cacheKey = coordinates ? 
-              `prayer-coords-${coordinates.lat.toFixed(4)}-${coordinates.lng.toFixed(4)}-${formattedDate}` :
-              `prayer-${city}-${formattedDate}`;
+              `prayer-coords-${coordinates.lat.toFixed(4)}-${coordinates.lng.toFixed(4)}-${formattedDate}-method${calculationMethod}-asr${asrCalculation}-shafaq${shafaqMethod}` :
+              `prayer-${city}-${formattedDate}-method${calculationMethod}-asr${asrCalculation}-shafaq${shafaqMethod}`;
+          
+          console.log('Cache key:', cacheKey);
           
           const strategies = [
               async () => {
                   let url;
+                  const calculationMethod = localStorage.getItem('calculationMethod') || '4'; // Default to Umm Al-Qura
+                  const asrCalculation = localStorage.getItem('asrCalculation') || 'shafi';
+                  const shafaqMethod = localStorage.getItem('shafaqMethod') || 'general';
+                  
                   if (coordinates) {
                       // Use coordinates for more accurate prayer times
-                      url = `https://api.aladhan.com/v1/timings/${formattedDate}?latitude=${coordinates.lat}&longitude=${coordinates.lng}&method=2`;
+                      url = `https://api.aladhan.com/v1/timings/${formattedDate}?latitude=${coordinates.lat}&longitude=${coordinates.lng}&method=${calculationMethod}`;
+                      
+                      // Add Asr calculation method
+                      if (asrCalculation === 'hanafi') {
+                          url += '&school=1'; // Hanafi school
+                      }
+                      
+                      // Add shafaq method if using Moonsighting Committee (method 15)
+                      if (calculationMethod === '15') {
+                          url += `&shafaq=${shafaqMethod}`;
+                      }
                   } else {
                       // Fallback to city-based lookup
-                      url = `https://api.aladhan.com/v1/timingsByAddress/${formattedDate}?address=${encodeURIComponent(city)}`;
+                      url = `https://api.aladhan.com/v1/timingsByAddress/${formattedDate}?address=${encodeURIComponent(city)}&method=${calculationMethod}`;
+                      
+                      // Add Asr calculation method
+                      if (asrCalculation === 'hanafi') {
+                          url += '&school=1'; // Hanafi school
+                      }
+                      
+                      // Add shafaq method if using Moonsighting Committee (method 15)
+                      if (calculationMethod === '15') {
+                          url += `&shafaq=${shafaqMethod}`;
+                      }
                   }
+                  console.log('API URL:', url);
                   const response = await fetch(url);
                   if (!response.ok) throw new Error(`Direct API failed: ${response.status}`);
-                  return response.json();
+                  const data = await response.json();
+                  console.log('API Response status:', data.code);
+                  return data;
               },
               
               async () => {
@@ -2707,6 +2744,7 @@ function showARUnsupported(errorType) {
           updatePrayerTimeFormat(); // Update prayer time format with new language
           updateCompassUI();
           updatePrayerSettingsLanguage();
+          updatePrayerSettingsDropdowns(); // Ensure dropdowns are updated with new language
           updatePrayerOffsetsLanguage();
           updateComingPrayerIndicator(); // Update coming prayer indicator with new language
           updateVideoLanguage(); // Update video generator language
@@ -3419,108 +3457,7 @@ function showARUnsupported(errorType) {
           return false;
       }
 
-      // Update the fetchPrayerTimes function
-      async function fetchPrayerTimes(city = "Amman") {
-          const today = new Date().toISOString().split('T')[0];
-          const formattedDate = today.split('-').reverse().join('-');
-          const cacheKey = `prayer-${city}-${formattedDate}`;
-          
-          // Try multiple approaches
-          const strategies = [
-              // 1. Direct API call
-              async () => {
-                  const url = `https://api.aladhan.com/v1/timingsByAddress/${formattedDate}?address=${encodeURIComponent(city)}`;
-                  const response = await fetch(url);
-                  if (!response.ok) throw new Error('Direct API failed');
-                  return response.json();
-              },
-              
-              // 2. Service Worker cached version
-              async () => {
-                  const cache = await caches.open('api-cache-v1');
-                  const cached = await cache.match(`https://api.aladhan.com/v1/timingsByAddress/${formattedDate}?address=${encodeURIComponent(city)}`);
-                  if (!cached) throw new Error('No cache available');
-                  return cached.json();
-              },
-              
-              // 3. localStorage fallback
-              async () => {
-                  const stored = localStorage.getItem(cacheKey);
-                  if (!stored) throw new Error('No localStorage data');
-                  return JSON.parse(stored);
-              }
-          ];
-
-          for (const strategy of strategies) {
-              try {
-                  const data = await strategy();
-                  // Store successful response in localStorage as backup
-                  localStorage.setItem(cacheKey, JSON.stringify(data));
-                  
-                  if (data.code === 200) {
-                      const timings = data.data.timings;
-                      const location = data.data.meta.timezone;
-
-                      // Store timings for notifications
-                      prayerNotifications = timings;
-                      
-                      // Save to storage
-                      savePrayerTimes(timings, location, city);
-            
-
-                      document.getElementById("azan-location").innerText = languages[currentLang].locationText(city, location);
-                                        // Use font-bold selectors for API prayer times with formatting
-                  const fajrEl = document.querySelector("#azan-fajr .font-bold");
-                  if (fajrEl) fajrEl.innerText = formatTime(timings.Fajr);
-                  
-                  const sunriseEl = document.querySelector("#azan-sunrise .font-bold");
-                  if (sunriseEl) sunriseEl.innerText = formatTime(timings.Sunrise);
-                  
-                  const duhaEl = document.querySelector("#azan-duha .font-bold");
-                  if (duhaEl) {
-                      if (timings.Duha) {
-                          duhaEl.innerText = formatTime(timings.Duha);
-                      } else {
-                          // Calculate Duha if not provided by API
-                          const duhaTime = calculateDuhaTime(timings.Sunrise);
-                          duhaEl.innerText = formatTime(duhaTime);
-                      }
-                  }
-                  
-                  const dhuhrEl = document.querySelector("#azan-dhuhr .font-bold");
-                  if (dhuhrEl) dhuhrEl.innerText = formatTime(timings.Dhuhr);
-                  
-                  const asrEl = document.querySelector("#azan-asr .font-bold");
-                  if (asrEl) asrEl.innerText = formatTime(timings.Asr);
-                  
-                  const maghribEl = document.querySelector("#azan-maghrib .font-bold");
-                  if (maghribEl) maghribEl.innerText = formatTime(timings.Maghrib);
-                  
-                  const ishaEl = document.querySelector("#azan-isha .font-bold");
-                  if (ishaEl) ishaEl.innerText = formatTime(timings.Isha);
-                      
-                      // Update prayer names after setting times
-                      updatePrayerTimesUI();
-
-                      // Setup notifications if enabled
-                      if (notificationEnabled) {
-                
-                          setupPrayerNotifications();
-                      }
-                      // Call highlighting function if times are loaded from storage
-                      setupPrayerHighlighting();
-                      return;
-                  }
-              } catch (error) {
-                  console.warn(`Strategy failed: ${error.message}`);
-                  continue;
-              }
-          }
-
-          // If all strategies fail, show error message
-          document.getElementById("azan-location").innerText = languages[currentLang].arErrorMessage;
-          throw new Error('All prayer time fetch strategies failed');
-      }
+      // Note: fetchPrayerTimes function is defined earlier in the file with calculation method support
 
       async function detectCityAndFetchTimes() {
           try {
@@ -5580,6 +5517,9 @@ function showARUnsupported(errorType) {
             
             // Update video language immediately after loading preference
             updateVideoLanguage();
+            
+            // Update prayer settings dropdowns after language is loaded
+            updatePrayerSettingsDropdowns();
             
             tafsirLang = currentLang;
 
@@ -10247,7 +10187,9 @@ function loadPrayerSettings() {
     // Load saved settings
     const prayerNotifications = localStorage.getItem('prayerNotifications') === 'true';
     const azanSound = localStorage.getItem('azanSound') || 'adhan.mp3';
+    const calculationMethod = localStorage.getItem('calculationMethod') || '4'; // Default to Umm Al-Qura
     const asrCalculation = localStorage.getItem('asrCalculation') || 'shafi';
+    const shafaqMethod = localStorage.getItem('shafaqMethod') || 'general';
     const timeFormat = localStorage.getItem('is24HourFormat') === 'true';
     
     // Load notification times (new checkbox system)
@@ -10263,7 +10205,9 @@ function loadPrayerSettings() {
     // Update UI
     document.getElementById('prayerNotificationToggle').checked = prayerNotifications;
     document.getElementById('azanSoundSelect').value = azanSound;
+    document.getElementById('calculationMethodSelect').value = calculationMethod;
     document.getElementById('asrCalculationSelect').value = asrCalculation;
+    document.getElementById('shafaqMethodSelect').value = shafaqMethod;
     document.getElementById('timeFormatToggle').checked = timeFormat;
     
     // Update notification checkboxes
@@ -10274,11 +10218,20 @@ function loadPrayerSettings() {
     document.getElementById('notification30min').checked = notification30min;
 }
 
-function savePrayerSettings() {
+async function savePrayerSettings() {
+    console.log('=== SAVE PRAYER SETTINGS CALLED ===');
     const prayerNotifications = document.getElementById('prayerNotificationToggle').checked;
     const azanSound = document.getElementById('azanSoundSelect').value;
+    const calculationMethod = document.getElementById('calculationMethodSelect').value;
     const asrCalculation = document.getElementById('asrCalculationSelect').value;
+    const shafaqMethod = document.getElementById('shafaqMethodSelect').value;
     const timeFormat = document.getElementById('timeFormatToggle').checked;
+    
+    console.log('New settings:', {
+        calculationMethod,
+        asrCalculation,
+        shafaqMethod
+    });
     
     // Get notification checkbox values
     const notificationAtTime = document.getElementById('notificationAtTime').checked;
@@ -10290,7 +10243,9 @@ function savePrayerSettings() {
     // Save to localStorage
     localStorage.setItem('prayerNotifications', prayerNotifications);
     localStorage.setItem('azanSound', azanSound);
+    localStorage.setItem('calculationMethod', calculationMethod);
     localStorage.setItem('asrCalculation', asrCalculation);
+    localStorage.setItem('shafaqMethod', shafaqMethod);
     localStorage.setItem('is24HourFormat', timeFormat);
     
     // Save notification times
@@ -10314,8 +10269,51 @@ function savePrayerSettings() {
         clearAllNotificationTimeouts();
     }
     
+    // Refresh prayer times if calculation method changed
+    console.log('Refreshing prayer times with new calculation method...');
+    
+    // Clear old prayer times cache to force fresh API call
+    const today = new Date().toISOString().split('T')[0];
+    const formattedDate = today.split('-').reverse().join('-');
+    const oldCacheKeys = Object.keys(localStorage).filter(key => 
+        key.startsWith('prayer-') && key.includes(formattedDate)
+    );
+    oldCacheKeys.forEach(key => {
+        console.log('Clearing old cache key:', key);
+        localStorage.removeItem(key);
+    });
+    
+    const currentLocation = localStorage.getItem('currentLocation') || 'Amman';
+    const currentCoordinates = localStorage.getItem('currentCoordinates');
+    
+    console.log('Current location:', currentLocation);
+    console.log('Current coordinates:', currentCoordinates);
+    
+    // Show loading message
+    showToast(currentLang === 'ar' ? 'جاري تحديث أوقات الصلاة...' : 'Updating prayer times...', 'info');
+    
+    try {
+        if (currentCoordinates) {
+            try {
+                const coords = JSON.parse(currentCoordinates);
+                console.log('Fetching prayer times with coordinates:', coords);
+                await fetchPrayerTimes(currentLocation, coords);
+            } catch (error) {
+                console.error('Error refreshing prayer times with coordinates:', error);
+                console.log('Falling back to city-based lookup');
+                await fetchPrayerTimes(currentLocation);
+            }
+        } else {
+            console.log('Fetching prayer times with city:', currentLocation);
+            await fetchPrayerTimes(currentLocation);
+        }
+    } catch (error) {
+        console.error('Error in fetchPrayerTimes:', error);
+        showToast(currentLang === 'ar' ? 'خطأ في تحديث أوقات الصلاة' : 'Error updating prayer times', 'error');
+    }
+    
     // Show success message
-    showToast(currentLang === 'ar' ? 'تم حفظ الإعدادات' : 'Settings saved successfully', 'success');
+    showToast(currentLang === 'ar' ? 'تم حفظ الإعدادات وتحديث أوقات الصلاة' : 'Settings saved and prayer times updated', 'success');
 }
 
 function updatePrayerSettingsLanguage() {
@@ -10332,7 +10330,9 @@ function updatePrayerSettingsLanguage() {
         'notification15minLabel': { ar: '15 دقيقة قبل', en: '15 minutes before' },
         'notification30minLabel': { ar: '30 دقيقة قبل', en: '30 minutes before' },
         'calculationMethodTitle': { ar: 'طريقة حساب أوقات الصلاة', en: 'Prayer Time Calculation Method' },
+        'calculationMethodLabel': { ar: 'طريقة الحساب', en: 'Calculation Method' },
         'asrCalculationLabel': { ar: 'حساب العصر', en: 'Asr Calculation' },
+        'shafaqMethodLabel': { ar: 'طريقة الشفق (للمجلس العالمي)', en: 'Shafaq Method (for Moonsighting Committee)' },
         'prayerOffsetsTitle': { ar: 'تعديل أوقات الصلاة', en: 'Prayer Time Adjustments' },
         'prayerOffsetsDesc': { ar: 'إضافة أو طرح دقائق من أوقات الصلاة المحسوبة', en: 'Add or subtract minutes from calculated prayer times' },
         'fajrOffsetLabel': { ar: 'الفجر', en: 'Fajr' },
@@ -10366,13 +10366,16 @@ function updatePrayerSettingsLanguage() {
 }
 function updatePrayerSettingsDropdowns() {
     console.log('=== UPDATE PRAYER SETTINGS DROPDOWNS CALLED ===');
+    console.log('Current language:', currentLang);
     console.log('customAdhanData at start of function:', !!customAdhanData);
     
-    // Azan sound options
+    // Get all dropdown elements
     const azanSoundSelect = document.getElementById('azanSoundSelect');
+    const calculationMethodSelect = document.getElementById('calculationMethodSelect');
     const asrCalculationSelect = document.getElementById('asrCalculationSelect');
+    const shafaqMethodSelect = document.getElementById('shafaqMethodSelect');
     
-    if (!azanSoundSelect || !asrCalculationSelect) {
+    if (!azanSoundSelect || !calculationMethodSelect || !asrCalculationSelect || !shafaqMethodSelect) {
         console.log('Prayer settings dropdowns not found');
         return;
     }
@@ -10396,6 +10399,54 @@ function updatePrayerSettingsDropdowns() {
         ]
     };
     
+    // Calculation method options with Arabic translations
+    const calculationMethodOptions = {
+        ar: [
+            { value: '1', text: 'رابطة العالم الإسلامي' },
+            { value: '2', text: 'الجمعية الإسلامية لأمريكا الشمالية (ISNA)' },
+            { value: '3', text: 'الهيئة المصرية العامة للمساحة' },
+            { value: '4', text: 'جامعة أم القرى، مكة المكرمة' },
+            { value: '5', text: 'جامعة العلوم الإسلامية، كراتشي' },
+            { value: '6', text: 'معهد الجيوفيزياء، طهران' },
+            { value: '7', text: 'الشيعة الإثنا عشرية، معهد ليفا للأبحاث، قم' },
+            { value: '8', text: 'منطقة الخليج' },
+            { value: '9', text: 'الكويت' },
+            { value: '10', text: 'قطر' },
+            { value: '11', text: 'مجلس أوغاما الإسلام سينغافورة' },
+            { value: '12', text: 'الاتحاد الإسلامي لفرنسا' },
+            { value: '13', text: 'رئاسة الشؤون الدينية، تركيا' },
+            { value: '14', text: 'الإدارة الروحية لمسلمي روسيا' },
+            { value: '15', text: 'لجنة رؤية الهلال العالمية (يتطلب معامل الشفق)' },
+            { value: '16', text: 'دبي (الإمارات)' },
+            { value: '17', text: 'كيميناج (إندونيسيا)' },
+            { value: '18', text: 'جاكيم (ماليزيا)' },
+            { value: '19', text: 'تونس' },
+            { value: '20', text: 'الجزائر' }
+        ],
+        en: [
+            { value: '1', text: 'Muslim World League' },
+            { value: '2', text: 'Islamic Society of North America (ISNA)' },
+            { value: '3', text: 'Egyptian General Authority of Survey' },
+            { value: '4', text: 'Umm Al-Qura University, Makkah' },
+            { value: '5', text: 'University Of Islamic Sciences, Karachi' },
+            { value: '6', text: 'Institute of Geophysics, Tehran' },
+            { value: '7', text: 'Shia Ithna Ashari, Leva Research Institute, Qum' },
+            { value: '8', text: 'Gulf Region' },
+            { value: '9', text: 'Kuwait' },
+            { value: '10', text: 'Qatar' },
+            { value: '11', text: 'Majlis Ugama Islam Singapura, Singapore' },
+            { value: '12', text: 'Union Organization islamic de France' },
+            { value: '13', text: 'Diyanet İşleri Başkanlığı, Turkey' },
+            { value: '14', text: 'Spiritual Administration of Muslims of Russia' },
+            { value: '15', text: 'Moonsighting Committee Worldwide (also requires shafaq parameter)' },
+            { value: '16', text: 'Dubai (UAE)' },
+            { value: '17', text: 'KEMENAG (Indonesia)' },
+            { value: '18', text: 'JAKIM (Malaysia)' },
+            { value: '19', text: 'Tunisia' },
+            { value: '20', text: 'Algeria' }
+        ]
+    };
+    
     // Asr calculation method options
     const asrCalculationOptions = {
         ar: [
@@ -10408,9 +10459,25 @@ function updatePrayerSettingsDropdowns() {
         ]
     };
     
+    // Shafaq method options
+    const shafaqMethodOptions = {
+        ar: [
+            { value: 'general', text: 'عام' },
+            { value: 'ahmer', text: 'أحمر' },
+            { value: 'abyad', text: 'أبيض' }
+        ],
+        en: [
+            { value: 'general', text: 'General' },
+            { value: 'ahmer', text: 'Ahmer' },
+            { value: 'abyad', text: 'Abyad' }
+        ]
+    };
+    
     // Get saved values from localStorage instead of current dropdown values
     const currentAzanSound = localStorage.getItem('azanSound') || 'adhan.mp3';
+    const currentCalculationMethod = localStorage.getItem('calculationMethod') || '4';
     const currentAsrCalculation = localStorage.getItem('asrCalculation') || 'shafi';
+    const currentShafaqMethod = localStorage.getItem('shafaqMethod') || 'general';
     // Update azan sound options
     azanSoundSelect.innerHTML = '';
     azanOptions[currentLang].forEach(option => {
@@ -10432,6 +10499,16 @@ function updatePrayerSettingsDropdowns() {
         console.log("currentAzanSound not found");
     }
     
+    // Update calculation method options
+    calculationMethodSelect.innerHTML = '';
+    calculationMethodOptions[currentLang].forEach(option => {
+        const optionElement = document.createElement('option');
+        optionElement.value = option.value;
+        optionElement.textContent = option.text;
+        optionElement.className = 'text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-800';
+        calculationMethodSelect.appendChild(optionElement);
+    });
+    
     // Update asr calculation options
     asrCalculationSelect.innerHTML = '';
     asrCalculationOptions[currentLang].forEach(option => {
@@ -10442,13 +10519,27 @@ function updatePrayerSettingsDropdowns() {
         asrCalculationSelect.appendChild(optionElement);
     });
     
+    // Update shafaq method options
+    shafaqMethodSelect.innerHTML = '';
+    shafaqMethodOptions[currentLang].forEach(option => {
+        const optionElement = document.createElement('option');
+        optionElement.value = option.value;
+        optionElement.textContent = option.text;
+        optionElement.className = 'text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-800';
+        shafaqMethodSelect.appendChild(optionElement);
+    });
+    
     // Set direction and text alignment based on language
     azanSoundSelect.style.direction = currentLang === 'ar' ? 'rtl' : 'ltr';
+    calculationMethodSelect.style.direction = currentLang === 'ar' ? 'rtl' : 'ltr';
     asrCalculationSelect.style.direction = currentLang === 'ar' ? 'rtl' : 'ltr';
+    shafaqMethodSelect.style.direction = currentLang === 'ar' ? 'rtl' : 'ltr';
     
     // Set text alignment for better appearance
     azanSoundSelect.style.textAlign = currentLang === 'ar' ? 'right' : 'left';
+    calculationMethodSelect.style.textAlign = currentLang === 'ar' ? 'right' : 'left';
     asrCalculationSelect.style.textAlign = currentLang === 'ar' ? 'right' : 'left';
+    shafaqMethodSelect.style.textAlign = currentLang === 'ar' ? 'right' : 'left';
     
     // Restore selected values
     console.log('=== DROPDOWN DEBUG ===');
@@ -10487,14 +10578,28 @@ function updatePrayerSettingsDropdowns() {
     console.log('Final dropdown selected text:', azanSoundSelect.options[azanSoundSelect.selectedIndex]?.textContent);
     console.log('=== END DEBUG ===');
     
+    // Restore other dropdown values
+    calculationMethodSelect.value = currentCalculationMethod;
     asrCalculationSelect.value = currentAsrCalculation;
+    shafaqMethodSelect.value = currentShafaqMethod;
 }
     // Initialize prayer settings event listeners
     function initializePrayerSettings() {
         // Add event listeners for settings changes
         document.getElementById('prayerNotificationToggle').addEventListener('change', savePrayerSettings);
         document.getElementById('azanSoundSelect').addEventListener('change', savePrayerSettings);
-        document.getElementById('asrCalculationSelect').addEventListener('change', savePrayerSettings);
+        document.getElementById('calculationMethodSelect').addEventListener('change', function() {
+            console.log('Calculation method changed to:', this.value);
+            savePrayerSettings();
+        });
+        document.getElementById('asrCalculationSelect').addEventListener('change', function() {
+            console.log('Asr calculation method changed to:', this.value);
+            savePrayerSettings();
+        });
+        document.getElementById('shafaqMethodSelect').addEventListener('change', function() {
+            console.log('Shafaq method changed to:', this.value);
+            savePrayerSettings();
+        });
         document.getElementById('timeFormatToggle').addEventListener('change', savePrayerSettings);
         
         // Add event listeners for notification time checkboxes
