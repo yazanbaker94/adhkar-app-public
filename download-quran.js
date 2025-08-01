@@ -48,8 +48,27 @@ async function downloadQuranData() {
         
         // Download other translations
         const translations = [
-            { code: 'en.pickthall', url: 'https://api.alquran.cloud/v1/quran/en.pickthall' },
-            { code: 'en.yusufali', url: 'https://api.alquran.cloud/v1/quran/en.yusufali' }
+            { code: 'ur.jalandhry', url: 'https://api.alquran.cloud/v1/quran/ur.jalandhry' },
+            { code: 'tr.diyanet', url: 'https://api.alquran.cloud/v1/quran/tr.diyanet' },
+            { code: 'fr.hameidullah', url: 'https://api.alquran.cloud/v1/quran/fr.hameidullah' },
+            { code: 'es.cortes', url: 'https://api.alquran.cloud/v1/quran/es.cortes' },
+            { code: 'de.bubenheim', url: 'https://api.alquran.cloud/v1/quran/de.bubenheim' },
+            { code: 'id.indonesian', url: 'https://api.alquran.cloud/v1/quran/id.indonesian' },
+            { code: 'fa.ansarian', url: 'https://api.alquran.cloud/v1/quran/fa.ansarian' },
+            { code: 'bn.bengali', url: 'https://api.alquran.cloud/v1/quran/bn.bengali' },
+            { code: 'zh.jian', url: 'https://api.alquran.cloud/v1/quran/zh.jian' },
+            { code: 'ru.kuliev', url: 'https://api.alquran.cloud/v1/quran/ru.kuliev' },
+            { code: 'ms.basmeih', url: 'https://api.alquran.cloud/v1/quran/ms.basmeih' },
+            { code: 'it.piccardo', url: 'https://api.alquran.cloud/v1/quran/it.piccardo' },
+            { code: 'pt.elhayek', url: 'https://api.alquran.cloud/v1/quran/pt.elhayek' },
+            { code: 'nl.keyzer', url: 'https://api.alquran.cloud/v1/quran/nl.keyzer' },
+            { code: 'hi.hindi', url: 'https://api.alquran.cloud/v1/quran/hi.hindi' },
+            { code: 'ta.tamil', url: 'https://api.alquran.cloud/v1/quran/ta.tamil' },
+            { code: 'th.thai', url: 'https://api.alquran.cloud/v1/quran/th.thai' },
+            { code: 'ja.japanese', url: 'https://api.alquran.cloud/v1/quran/ja.japanese' },
+            { code: 'ko.korean', url: 'https://api.alquran.cloud/v1/quran/ko.korean' },
+            { code: 'ha.gumi', url: 'https://api.alquran.cloud/v1/quran/ha.gumi' },
+            { code: 'sw.barwani', url: 'https://api.alquran.cloud/v1/quran/sw.barwani' }
         ];
         
         for (const translation of translations) {

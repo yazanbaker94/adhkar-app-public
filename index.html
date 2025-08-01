@@ -1603,13 +1603,6 @@
         <select id="translationSelect" class="bg-gray-100 dark:bg-gray-700 rounded-lg px-3 py-2 text-sm" title="Select Translation - اختر الترجمة">
           <optgroup label="English">
             <option value="en.sahih">English (Sahih Intl)</option>
-            <option value="en.pickthall">English (Pickthall)</option>
-            <option value="en.yusufali">English (Yusuf Ali)</option>
-            <option value="en.hilali">English (Hilali-Khan)</option>
-            <option value="en.arberry">English (Arberry)</option>
-            <option value="en.asad">English (Muhammad Asad)</option>
-            <option value="en.daryabadi">English (Daryabadi)</option>
-            <option value="en.shakir">English (Shakir)</option>
           </optgroup>
           <optgroup label="European">
             <option value="fr.hamidullah">Français (Hamidullah)</option>
@@ -1906,6 +1899,13 @@
                         <div class="space-y-2">
                             <label class="block text-xs font-medium text-gray-600 dark:text-gray-400" id="textColorLabel">Text Color</label>
                             <input type="color" id="videoTextColor" value="#ffffff" class="w-full h-10 rounded-lg border border-gray-300 dark:border-gray-600 cursor-pointer">
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400" id="translationLabel">Translation</label>
+                            <select id="videoTranslationSelect" dir="ltr" class="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200 text-sm">
+                                <option value="">Loading translations...</option>
+                            </select>
                         </div>
                     </div>
 

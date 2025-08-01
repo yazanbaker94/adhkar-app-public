@@ -18,7 +18,8 @@ try {
     { path: './fonts/UthmanicHafs1Ver18.ttf', family: 'KFGQPC HAFS Uthmanic Script' },
     { path: './fonts/AlMushafQuran.ttf', family: 'Al Majeed Quranic Font' },
     { path: './fonts/UtmanTahaNaskh.ttf', family: 'KFGQPC Uthman Taha Naskh' },
-    { path: './fonts/UthmanicHafs1Ver09.ttf', family: 'KFGQPC Uthmanic Script HAFS' }
+    { path: './fonts/UthmanicHafs1Ver09.ttf', family: 'KFGQPC Uthmanic Script HAFS' },
+
   ];
   
   fontFiles.forEach(font => {
@@ -54,17 +55,17 @@ try {
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const httpsOptions = {
-  key: fs.readFileSync('/etc/letsencrypt/live/api.sakinahtime.com/privkey.pem'),
-  cert: fs.readFileSync('/etc/letsencrypt/live/api.sakinahtime.com/fullchain.pem')
-};
+// const httpsOptions = {
+//   key: fs.readFileSync('/etc/letsencrypt/live/api.sakinahtime.com/privkey.pem'),
+//   cert: fs.readFileSync('/etc/letsencrypt/live/api.sakinahtime.com/fullchain.pem')
+// };
 
-// Your middleware, routes, etc.
-// app.use(...)
+// // Your middleware, routes, etc.
+// // app.use(...)
 
-https.createServer(httpsOptions, app).listen(443, () => {
-  console.log('HTTPS Server running on port 443');
-});
+// https.createServer(httpsOptions, app).listen(443, () => {
+//   console.log('HTTPS Server running on port 443');
+// });
 // Middleware - Configure CORS to allow your frontend domain
 app.use(cors({
   origin: [
@@ -130,68 +131,114 @@ dirs.forEach(dir => {
   fs.ensureDirSync(path.join(__dirname, dir));
 });
 
+// Helper function to get translation filename by ID
+function getTranslationFilename(translationId) {
+  const translationMap = {
+    'en_sahih': 'en.sahih.json',
+    'ur_jalandhry': 'ur.jalandhry.json',
+    'tr_diyanet': 'tr.diyanet.json',
+    'fr_hameidullah': 'fr.hameidullah.json',
+    'es_cortes': 'es.cortes.json',
+    'de_bubenheim': 'de.bubenheim.json',
+    'id_indonesian': 'id.indonesian.json',
+    'fa_ansarian': 'fa.ansarian.json',
+    'bn_bengali': 'bn.bengali.json',
+    'zh_jian': 'zh.jian.json',
+    'ru_kuliev': 'ru.kuliev.json',
+    'ms_basmeih': 'ms.basmeih.json',
+    'it_piccardo': 'it.piccardo.json',
+    'pt_elhayek': 'pt.elhayek.json',
+    'nl_keyzer': 'nl.keyzer.json',
+    'hi_hindi': 'hi.hindi.json',
+    'ta_tamil': 'ta.tamil.json',
+    'th_thai': 'th.thai.json',
+    'ja_japanese': 'ja.japanese.json',
+    'ko_korean': 'ko.korean.json',
+    'ha_gumi': 'ha.gumi.json',
+    'sw_barwani': 'sw.barwani.json'
+  };
+  
+  return translationMap[translationId] || 'en.sahih.json'; // Default fallback
+}
+
 function calculateOptimalTextSize(text, fontFamily, baseSize, maxWidth, maxHeight) {
   console.log('📏 calculateOptimalTextSize called with:');
   console.log(`Text: "${text.substring(0, 50)}${text.length > 50 ? '...' : ''}"`);
   console.log(`Font: ${fontFamily}, Size: ${baseSize}, MaxWidth: ${maxWidth}, MaxHeight: ${maxHeight}`);
-  
-  const tempCanvas = createCanvas(100, 100);
+  console.log(`Text length: ${text.length} characters`);
+
+  const tempCanvas = createCanvas(maxWidth * 2, maxHeight * 2);
   const tempCtx = tempCanvas.getContext('2d');
-  
+
   let optimalSize = baseSize;
-  let lines = [text]; // Start with single line
-  
-  // Test font sizes from base down to minimum
-  for (let size = baseSize; size >= 16; size -= 2) {
-    tempCtx.font = `${size}px "${fontFamily}"`;
-    
-    // Try single line first
-    const singleLineWidth = tempCtx.measureText(text).width;
-    const lineHeight = size * 1.3;
-    
-    if (singleLineWidth <= maxWidth && lineHeight <= maxHeight) {
-      optimalSize = size;
-      lines = [text];
-      break;
-    }
-    
-    // Try text wrapping for both Arabic and non-Arabic text
-    // Check if text contains Arabic characters
-    const hasArabic = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(text);
-    
-    console.log(`📝 ${hasArabic ? 'Arabic' : 'Non-Arabic'} text detected, attempting wrapping at size ${size}px`);
-    
-    // For both Arabic and non-Arabic text, use word wrapping
-    const words = text.split(' ');
-    if (words.length > 1) {
+  let lines = [text]; // Default to a single line
+
+  // Iterate from the base font size downwards to find the best fit
+  // Allow smaller fonts for very long text (like verse 282)
+  const minFontSize = text.length > 1000 ? 10 : 16;
+  for (let size = baseSize; size >= minFontSize; size -= 2) {
+      tempCtx.font = `${size}px "${fontFamily}"`;
+      const lineHeight = size * 1.3;
+
+      // --- MODIFIED & MORE ROBUST WORD WRAPPING LOGIC ---
+
+      // Check for languages that don't use spaces (Japanese, Chinese, Bengali, etc.)
+      // Exclude languages that use Latin script with spaces (Indonesian, Malay, etc.)
+      const isCharBasedLanguage = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9faf\u0980-\u09FF\u0E00-\u0E7F\u0900-\u097F]/.test(text) && 
+                                 !/^[a-zA-Z\s\u00C0-\u017F\u1E00-\u1EFF]+/.test(text.trim());
+      const segments = isCharBasedLanguage ? text.split('') : text.split(' ');
+      
+      console.log(`📝 Text analysis: isCharBasedLanguage=${isCharBasedLanguage}, segments=${segments.length}`);
+
+      if (segments.length === 0) {
+          lines = [];
+          optimalSize = size;
+          break;
+      }
+      
+
+
       const wrappedLines = [];
-      let currentLine = '';
-      
-      for (const word of words) {
-        const testLine = currentLine ? `${currentLine} ${word}` : word;
-        const testWidth = tempCtx.measureText(testLine).width;
-        
-        if (testWidth <= maxWidth) {
-          currentLine = testLine;
-        } else {
-          if (currentLine) wrappedLines.push(currentLine);
-          currentLine = word;
-        }
+      let currentLine = segments[0]; // Start with the first word/char
+
+      for (let i = 1; i < segments.length; i++) {
+          const segment = segments[i];
+          const separator = isCharBasedLanguage ? '' : ' ';
+          const testLine = currentLine + separator + segment;
+
+          const testWidth = tempCtx.measureText(testLine).width;
+          if (testWidth > maxWidth) {
+              // The new word doesn't fit, so push the current line...
+              wrappedLines.push(currentLine);
+              // ...and start a new line with the current word.
+              currentLine = segment;
+          } else {
+              // The new word fits, so add it to the current line.
+              currentLine = testLine;
+          }
       }
-      if (currentLine) wrappedLines.push(currentLine);
-      
+      wrappedLines.push(currentLine); // Add the last line
+
+      // --- END OF MODIFIED LOGIC ---
+
       const totalHeight = wrappedLines.length * lineHeight;
+
+      // Check if the wrapped text fits within the allowed height
       if (totalHeight <= maxHeight) {
-        optimalSize = size;
-        lines = wrappedLines;
-        break;
+          // Check if any single line is still too wide (can happen with very long words)
+          const isAnyLineTooWide = wrappedLines.some(line => tempCtx.measureText(line).width > maxWidth);
+
+          if (!isAnyLineTooWide) {
+              optimalSize = size;
+              lines = wrappedLines;
+              break; // Found the optimal size, exit the loop
+          }
       }
-    }
   }
-  
-  console.log(`Calculated optimal size for "${text.substring(0, 30)}...": ${optimalSize}px, lines: ${lines.length}`);
+
+  console.log(`✅ Calculated optimal size for "${text.substring(0, 30)}...": ${optimalSize}px, lines: ${lines.length}`);
   if (lines.length > 1) {
-    console.log('Text wrapped into lines:', lines.map(line => `"${line.substring(0, 20)}..."`));
+    console.log('📄 Wrapped lines:', lines.map((line, i) => `${i+1}: "${line.substring(0, 30)}..."`));
   }
   return { fontSize: optimalSize, lines: lines };
 }
@@ -241,6 +288,194 @@ app.get('/api/fonts', (req, res) => {
   }
 });
 
+// Get available translations
+app.get('/api/translations', (req, res) => {
+  try {
+    const translations = [
+      { 
+        id: 'en_sahih', 
+        name: 'English - Sahih International', 
+        nameAr: 'الإنجليزية - صحيح دولي',
+        language: 'English',
+        languageCode: 'en',
+        filename: 'en.sahih.json'
+      },
+      { 
+        id: 'ur_jalandhry', 
+        name: 'Urdu - Jalandhry', 
+        nameAr: 'الأردية - جالندھری',
+        language: 'Urdu',
+        languageCode: 'ur',
+        filename: 'ur.jalandhry.json'
+      },
+      { 
+        id: 'tr_diyanet', 
+        name: 'Turkish - Diyanet', 
+        nameAr: 'التركية - ديانت',
+        language: 'Turkish',
+        languageCode: 'tr',
+        filename: 'tr.diyanet.json'
+      },
+      { 
+        id: 'fr_hameidullah', 
+        name: 'French - Hamidullah', 
+        nameAr: 'الفرنسية - حميد الله',
+        language: 'French',
+        languageCode: 'fr',
+        filename: 'fr.hameidullah.json'
+      },
+      { 
+        id: 'es_cortes', 
+        name: 'Spanish - Cortes', 
+        nameAr: 'الإسبانية - كورتيس',
+        language: 'Spanish',
+        languageCode: 'es',
+        filename: 'es.cortes.json'
+      },
+      { 
+        id: 'de_bubenheim', 
+        name: 'German - Bubenheim', 
+        nameAr: 'الألمانية - بوبنهايم',
+        language: 'German',
+        languageCode: 'de',
+        filename: 'de.bubenheim.json'
+      },
+      { 
+        id: 'id_indonesian', 
+        name: 'Indonesian - Indonesian', 
+        nameAr: 'الإندونيسية - الإندونيسية',
+        language: 'Indonesian',
+        languageCode: 'id',
+        filename: 'id.indonesian.json'
+      },
+      { 
+        id: 'fa_ansarian', 
+        name: 'Persian - Ansarian', 
+        nameAr: 'الفارسية - أنصاريان',
+        language: 'Persian',
+        languageCode: 'fa',
+        filename: 'fa.ansarian.json'
+      },
+      { 
+        id: 'bn_bengali', 
+        name: 'Bengali - Muhiyuddin Khan', 
+        nameAr: 'البنغالية - محيي الدين خان',
+        language: 'Bengali',
+        languageCode: 'bn',
+        filename: 'bn.bengali.json'
+      },
+      { 
+        id: 'zh_jian', 
+        name: 'Chinese - Ma Jian', 
+        nameAr: 'الصينية - ما جيان',
+        language: 'Chinese',
+        languageCode: 'zh',
+        filename: 'zh.jian.json'
+      },
+      { 
+        id: 'ru_kuliev', 
+        name: 'Russian - Kuliev', 
+        nameAr: 'الروسية - كولييف',
+        language: 'Russian',
+        languageCode: 'ru',
+        filename: 'ru.kuliev.json'
+      },
+      { 
+        id: 'ms_basmeih', 
+        name: 'Malay - Basmeih', 
+        nameAr: 'الماليزية - بسميح',
+        language: 'Malay',
+        languageCode: 'ms',
+        filename: 'ms.basmeih.json'
+      },
+      { 
+        id: 'it_piccardo', 
+        name: 'Italian - Piccardo', 
+        nameAr: 'الإيطالية - بيكاردو',
+        language: 'Italian',
+        languageCode: 'it',
+        filename: 'it.piccardo.json'
+      },
+      { 
+        id: 'pt_elhayek', 
+        name: 'Portuguese - El Hayek', 
+        nameAr: 'البرتغالية - الحايك',
+        language: 'Portuguese',
+        languageCode: 'pt',
+        filename: 'pt.elhayek.json'
+      },
+      { 
+        id: 'nl_keyzer', 
+        name: 'Dutch - Keyzer', 
+        nameAr: 'الهولندية - كيزر',
+        language: 'Dutch',
+        languageCode: 'nl',
+        filename: 'nl.keyzer.json'
+      },
+      { 
+        id: 'hi_hindi', 
+        name: 'Hindi - Farooq Khan', 
+        nameAr: 'الهندية - فاروق خان',
+        language: 'Hindi',
+        languageCode: 'hi',
+        filename: 'hi.hindi.json'
+      },
+      { 
+        id: 'ta_tamil', 
+        name: 'Tamil - Jan Trust', 
+        nameAr: 'التاميلية - جان تراست',
+        language: 'Tamil',
+        languageCode: 'ta',
+        filename: 'ta.tamil.json'
+      },
+      { 
+        id: 'th_thai', 
+        name: 'Thai - Royal Office', 
+        nameAr: 'التايلاندية - المكتب الملكي',
+        language: 'Thai',
+        languageCode: 'th',
+        filename: 'th.thai.json'
+      },
+      { 
+        id: 'ja_japanese', 
+        name: 'Japanese - Mori', 
+        nameAr: 'اليابانية - موري',
+        language: 'Japanese',
+        languageCode: 'ja',
+        filename: 'ja.japanese.json'
+      },
+      { 
+        id: 'ko_korean', 
+        name: 'Korean - Choi', 
+        nameAr: 'الكورية - تشوي',
+        language: 'Korean',
+        languageCode: 'ko',
+        filename: 'ko.korean.json'
+      },
+      { 
+        id: 'ha_gumi', 
+        name: 'Hausa - Gumi', 
+        nameAr: 'الهوسا - غومي',
+        language: 'Hausa',
+        languageCode: 'ha',
+        filename: 'ha.gumi.json'
+      },
+      { 
+        id: 'sw_barwani', 
+        name: 'Swahili - Barwani', 
+        nameAr: 'السواحيلية - بارواني',
+        language: 'Swahili',
+        languageCode: 'sw',
+        filename: 'sw.barwani.json'
+      }
+    ];
+    res.json(translations);
+  } catch (error) {
+    console.error('Error getting translations:', error);
+    res.status(500).json({ error: 'Failed to get translations' });
+  }
+});
+
 // Generate live preview video (short version for real-time preview)
 // FINAL PREVIEW CODE - Replace your entire /api/preview-video route with this
 
@@ -251,7 +486,7 @@ app.post('/api/preview-video', async (req, res) => {
       console.log('Generating live preview...');
 
       const {
-          surah, ayah, ayahTo, textColor, fontSize, fontFamily, orientation, backgroundFilename
+          surah, ayah, ayahTo, textColor, fontSize, fontFamily, orientation, backgroundFilename, translation
       } = req.body;
 
       // --- 1. Validation and Setup ---
@@ -279,10 +514,39 @@ app.post('/api/preview-video', async (req, res) => {
           'Uthmanic Hafs': 'KFGQPC HAFS Uthmanic Script'
       };
       const selectedFont = fontMapping[fontFamily] || fontFamily;
-
+// Language-specific font mapping for translations
+const languageFontMapping = {
+  'en_sahih': 'Arial',
+  'ur_jalandhry': 'Arial',
+  'tr_diyanet': 'Arial',
+  'fr_hameidullah': 'Arial',
+  'es_cortes': 'Arial',
+  'de_bubenheim': 'Arial',
+  'id_indonesian': 'Arial',
+  'fa_ansarian': 'Arial',
+  'bn_bengali': 'Nirmala UI, Segoe UI, Arial',
+  'zh_jian': 'Microsoft YaHei, SimSun, Arial',
+  'ru_kuliev': 'Arial',
+  'ja_japanese': 'Meiryo, Yu Gothic, Arial',
+  'ms_basmeih': 'Arial',
+  'it_piccardo': 'Arial',
+  'pt_elhayek': 'Arial',
+  'nl_keyzer': 'Arial',
+  'hi_hindi': 'Nirmala UI, Segoe UI, Arial',
+  'ta_tamil': 'Nirmala UI, Segoe UI, Arial',
+  'th_thai': 'Leelawadee UI, Microsoft Sans Serif, Arial',
+  'ja_japanese': 'Meiryo, Yu Gothic, Arial',
+  'ko_korean': 'Malgun Gothic, Arial',
+  'ha_gumi': 'Arial',
+  'sw_barwani': 'Arial'
+};
       // --- 2. Fetch and Prepare Text ---
       const quranData = JSON.parse(fs.readFileSync('./quran-uthmani.json', 'utf8'));
-      const translationData = JSON.parse(fs.readFileSync('./en.sahih.json', 'utf8'));
+      
+      // Load translation based on selected translation or default to Sahih International
+      const translationId = translation || 'en_sahih';
+      const translationFilename = getTranslationFilename(translationId);
+      const translationData = JSON.parse(fs.readFileSync(`./${translationFilename}`, 'utf8'));
 
       const startVerse = parseInt(ayahNum);
       const endVerse = ayahTo ? parseInt(ayahTo) : startVerse;
@@ -301,11 +565,24 @@ app.post('/api/preview-video', async (req, res) => {
       
       // --- 3. Calculate Optimal Text Size using the helper function ---
       const arabicTextHeight = Math.floor(videoHeight * 0.2);
-      const translationTextHeight = Math.floor(videoHeight * 0.15);
+      
+      // Dynamic height allocation based on text length - increase for very long verses
+      let translationHeightPercent = 0.15; // Default 15%
+      if (translationText.length > 1000) {
+        translationHeightPercent = 0.25; // 25% for very long verses
+        console.log(`📏 Very long verse detected (${translationText.length} chars) - using 25% height allocation`);
+      } else if (translationText.length > 500) {
+        translationHeightPercent = 0.2; // 20% for long verses
+        console.log(`📏 Long verse detected (${translationText.length} chars) - using 20% height allocation`);
+      }
+      const translationTextHeight = Math.floor(videoHeight * translationHeightPercent);
 
       // Call the new shared function to get the correct font size and wrapped lines
       const arabicTextData = calculateOptimalTextSize(arabicText, selectedFont, baseFontSize, maxTextWidth, arabicTextHeight);
-      const translationTextData = calculateOptimalTextSize(translationText, 'Arial', Math.floor(baseFontSize * 0.7), maxTextWidth, translationTextHeight);
+      
+      // Get appropriate font for the selected translation
+      const translationFont = languageFontMapping[translationId] || 'Arial';
+      const translationTextData = calculateOptimalTextSize(translationText, translationFont, Math.floor(baseFontSize * 0.7), maxTextWidth, translationTextHeight);
       
       const arabicBlockHeight = arabicTextData.fontSize * 1.3 * arabicTextData.lines.length;
       const translationBlockHeight = translationTextData.fontSize * 1.3 * translationTextData.lines.length;
@@ -327,12 +604,15 @@ app.post('/api/preview-video', async (req, res) => {
       const tempTranslationTextPath = path.join(__dirname, 'temp', `${previewId}_translation.png`);
       const translationCanvas = createCanvas(videoWidth, translationBlockHeight);
       const translationCtx = translationCanvas.getContext('2d');
-      translationCtx.font = `${translationTextData.fontSize}px "Arial"`; // Use calculated font size
+      
+      translationCtx.font = `${translationTextData.fontSize}px "${translationFont}"`; // Use calculated font size
       translationCtx.fillStyle = textColorValue;
       translationCtx.textAlign = 'center';
       translationCtx.textBaseline = 'middle';
+      console.log(`🎨 Rendering ${translationTextData.lines.length} translation lines:`);
       translationTextData.lines.forEach((line, index) => { // Use calculated lines
           const y = (index * translationTextData.fontSize * 1.3) + (translationTextData.fontSize * 1.3 / 2);
+          console.log(`  Line ${index + 1}: "${line.substring(0, 50)}..." at y=${y}`);
           translationCtx.fillText(line, videoWidth / 2, y);
       });
       fs.writeFileSync(tempTranslationTextPath, translationCanvas.toBuffer('image/png'));
@@ -687,7 +967,8 @@ app.post('/api/generate-video', upload.single('background'), async (req, res) =>
       fontFamily,
       orientation,
       duration,
-      quality
+      quality,
+      translation
     } = req.body;
     
     console.log('Extracted values:');
@@ -751,7 +1032,9 @@ app.post('/api/generate-video', upload.single('background'), async (req, res) =>
     }
     
     // Load translations for all verses
-    const translationData = JSON.parse(fs.readFileSync('en.sahih.json', 'utf8'));
+    const translationId = translation || 'en_sahih';
+    const translationFilename = getTranslationFilename(translationId);
+    const translationData = JSON.parse(fs.readFileSync(translationFilename, 'utf8'));
     
     for (let i = 0; i < verses.length; i++) {
       const verseNumber = verses[i].number;
@@ -1052,7 +1335,17 @@ app.post('/api/generate-video', upload.single('background'), async (req, res) =>
     // Calculate responsive dimensions for text areas
     const maxTextWidth = Math.floor(videoWidth * 0.85); // 85% of video width
     const arabicTextHeight = Math.floor(videoHeight * 0.2); // 20% for Arabic
-    const translationTextHeight = Math.floor(videoHeight * 0.15); // 15% for translation
+    
+    // Dynamic height allocation based on text length - increase for very long verses
+    let translationHeightPercent = 0.15; // Default 15%
+    if (translationText.length > 1000) {
+      translationHeightPercent = 0.25; // 25% for very long verses
+      console.log(`📏 Video gen: Very long verse detected (${translationText.length} chars) - using 25% height allocation`);
+    } else if (translationText.length > 500) {
+      translationHeightPercent = 0.2; // 20% for long verses
+      console.log(`📏 Video gen: Long verse detected (${translationText.length} chars) - using 20% height allocation`);
+    }
+    const translationTextHeight = Math.floor(videoHeight * translationHeightPercent);
     
     console.log(`Text constraints - Width: ${maxTextWidth}, Arabic height: ${arabicTextHeight}, Translation height: ${translationTextHeight}`);
     
@@ -1070,6 +1363,32 @@ app.post('/api/generate-video', upload.single('background'), async (req, res) =>
       'Al Majeed Quranic Font': 'Arabic Typesetting',
       'KFGQPC Uthman Taha Naskh': 'Tahoma',
       'KFGQPC Uthmanic Script HAFS': 'Segoe UI'
+    };
+
+    // Language-specific font mapping for translations
+    const languageFontMapping = {
+      'en_sahih': 'Arial',
+      'ur_jalandhry': 'Arial',
+      'tr_diyanet': 'Arial',
+      'fr_hameidullah': 'Arial',
+      'es_cortes': 'Arial',
+      'de_bubenheim': 'Arial',
+      'id_indonesian': 'Arial',
+      'fa_ansarian': 'Arial',
+      'bn_bengali': 'Nirmala UI, Segoe UI, Arial',
+      'zh_jian': 'Microsoft YaHei, SimSun, Arial',
+      'ru_kuliev': 'Arial',
+      'ms_basmeih': 'Arial',
+      'it_piccardo': 'Arial',
+      'pt_elhayek': 'Arial',
+      'nl_keyzer': 'Arial',
+      'hi_hindi': 'Nirmala UI, Segoe UI, Arial',
+      'ta_tamil': 'Nirmala UI, Segoe UI, Arial',
+      'th_thai': 'Leelawadee UI, Microsoft Sans Serif, Arial',
+      'ja_japanese': 'Meiryo, Yu Gothic, Arial',
+          'ko_korean': 'Malgun Gothic, Arial',
+    'ha_gumi': 'Arial',
+    'sw_barwani': 'Arial'
     };
     
     const requestedFont = fontFamily || 'Uthmanic Hafs';
@@ -1094,7 +1413,10 @@ app.post('/api/generate-video', upload.single('background'), async (req, res) =>
     // Use first verse to determine optimal font sizing for consistency
     const firstVerse = verseTimings[0];
     const arabicTextData = calculateOptimalTextSize(firstVerse.arabicText, selectedFont, baseFontSize, maxTextWidth, arabicTextHeight);
-    const translationTextData = calculateOptimalTextSize(firstVerse.translation, 'Arial', Math.floor(baseFontSize * 0.7), maxTextWidth, translationTextHeight);
+    
+    // Get appropriate font for the selected translation
+    const translationFont = languageFontMapping[translationId] || 'Arial';
+    const translationTextData = calculateOptimalTextSize(firstVerse.translation, translationFont, Math.floor(baseFontSize * 0.7), maxTextWidth, translationTextHeight);
     
     console.log(`📏 Using consistent font sizes: Arabic ${arabicTextData.fontSize}px, Translation ${translationTextData.fontSize}px`);
     
@@ -1166,9 +1488,9 @@ app.post('/api/generate-video', upload.single('background'), async (req, res) =>
       const translationCtx = translationCanvas.getContext('2d');
       
       // Calculate translation text with proper wrapping
-      const translationData = calculateOptimalTextSize(timing.translation, 'Arial', translationTextData.fontSize, maxTextWidth, translationTextHeight);
+      const translationData = calculateOptimalTextSize(timing.translation, translationFont, translationTextData.fontSize, maxTextWidth, translationTextHeight);
       
-      translationCtx.font = `${translationData.fontSize}px "Arial"`;
+      translationCtx.font = `${translationData.fontSize}px "${translationFont}"`;
       translationCtx.fillStyle = textColorValue;
       translationCtx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
       translationCtx.lineWidth = 2;
@@ -1180,8 +1502,10 @@ app.post('/api/generate-video', upload.single('background'), async (req, res) =>
       const totalTranslationHeight = translationData.lines.length * translationLineHeight;
       const translationStartY = (translationTextHeight - totalTranslationHeight) / 2 + translationLineHeight / 2;
       
+      console.log(`🎨 Video gen: Rendering ${translationData.lines.length} translation lines for verse ${timing.verse}:`);
       translationData.lines.forEach((line, index) => {
         const y = translationStartY + (index * translationLineHeight);
+        console.log(`  Line ${index + 1}: "${line.substring(0, 50)}..." at y=${y}`);
         translationCtx.strokeText(line, videoWidth / 2, y);
         translationCtx.fillText(line, videoWidth / 2, y);
       });

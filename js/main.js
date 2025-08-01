@@ -1292,13 +1292,6 @@ let scrollTimeout = null;
               translationNames: {
                   // English
                   "en.sahih": "الإنجليزية (صحاح)",
-                  "en.pickthall": "الإنجليزية (بيكثال)",
-                  "en.yusufali": "الإنجليزية (يوسف علي)",
-                  "en.hilali": "الإنجليزية (هلالي-خان)",
-                  "en.arberry": "الإنجليزية (آربري)",
-                  "en.asad": "الإنجليزية (محمد أسد)",
-                  "en.daryabadi": "الإنجليزية (داريابادي)",
-                  "en.shakir": "الإنجليزية (شاكر)",
                   // French
                   "fr.hamidullah": "الفرنسية (حميد الله)",
                   "fr.leclerc": "الفرنسية (لوكليرك)",
@@ -1533,13 +1526,6 @@ let scrollTimeout = null;
               translationNames: {
                   // English
                   "en.sahih": "English (Sahih Intl)",
-                  "en.pickthall": "English (Pickthall)",
-                  "en.yusufali": "English (Yusuf Ali)",
-                  "en.hilali": "English (Hilali-Khan)",
-                  "en.arberry": "English (Arberry)",
-                  "en.asad": "English (Muhammad Asad)",
-                  "en.daryabadi": "English (Daryabadi)",
-                  "en.shakir": "English (Shakir)",
                   // French
                   "fr.hamidullah": "Français (Hamidullah)",
                   "fr.leclerc": "Français (Leclerc)",
@@ -2992,13 +2978,6 @@ function showARUnsupported(errorType) {
               const translationOptions = [
                   // English Translations
                   { value: "en.sahih", group: currentLang === 'ar' ? "الإنجليزية" : "English" },
-                  { value: "en.pickthall", group: currentLang === 'ar' ? "الإنجليزية" : "English" },
-                  { value: "en.yusufali", group: currentLang === 'ar' ? "الإنجليزية" : "English" },
-                  { value: "en.hilali", group: currentLang === 'ar' ? "الإنجليزية" : "English" },
-                  { value: "en.arberry", group: currentLang === 'ar' ? "الإنجليزية" : "English" },
-                  { value: "en.asad", group: currentLang === 'ar' ? "الإنجليزية" : "English" },
-                  { value: "en.daryabadi", group: currentLang === 'ar' ? "الإنجليزية" : "English" },
-                  { value: "en.shakir", group: currentLang === 'ar' ? "الإنجليزية" : "English" },
                   
                   // European Languages
                   { value: "fr.hamidullah", group: currentLang === 'ar' ? "الأوروبية" : "European" },
@@ -11612,6 +11591,10 @@ function loadPrayerOffsets() {
         console.log('Loading fonts...');
         loadVideoFonts();
         
+        // Load translations
+        console.log('Loading translations...');
+        loadVideoTranslations();
+        
         // Load surahs for video generation
         console.log('Loading surahs...');
         loadVideoSurahs();
@@ -11751,6 +11734,187 @@ function loadPrayerOffsets() {
                 console.log('loadVideoReciters: Added fallback reciters');
                 // Update names to current language after loading
                 updateReciterNames();
+            }
+        }
+    }
+
+    // Load translations for video generation
+    async function loadVideoTranslations() {
+        console.log('loadVideoTranslations: Starting...');
+        try {
+            const apiBaseUrl = getApiBaseUrl();
+            console.log(`loadVideoTranslations: Fetching from ${apiBaseUrl}/api/translations...`);
+            const response = await fetch(`${apiBaseUrl}/api/translations`);
+            console.log('loadVideoTranslations: Response status:', response.status);
+            const translations = await response.json();
+            console.log('loadVideoTranslations: Received translations:', translations);
+            
+            const translationSelect = document.getElementById('videoTranslationSelect');
+            console.log('loadVideoTranslations: Found translation select element:', !!translationSelect);
+            if (translationSelect) {
+                // Clear dropdown and add placeholder first
+                translationSelect.innerHTML = '';
+                
+                // Add placeholder option
+                const placeholderOption = document.createElement('option');
+                placeholderOption.value = '';
+                placeholderOption.textContent = currentLang === 'ar' ? 'اختر الترجمة' : 'Select Translation';
+                translationSelect.appendChild(placeholderOption);
+                
+                // Add actual translations
+                translations.forEach(translation => {
+                    const option = document.createElement('option');
+                    option.value = translation.id;
+                    // Use Arabic name if available and in Arabic mode, otherwise use English name
+                    option.textContent = (currentLang === 'ar' && translation.nameAr) ? translation.nameAr : translation.name;
+                    translationSelect.appendChild(option);
+                });
+                console.log('loadVideoTranslations: Added', translations.length, 'translations to dropdown');
+                
+                // Set default selection to Sahih International
+                translationSelect.value = 'en_sahih';
+            } else {
+                console.error('loadVideoTranslations: Translation select element not found!');
+            }
+        } catch (error) {
+            console.error('loadVideoTranslations: Error loading translations:', error);
+            // Fallback to hardcoded translations if server is not available
+            const fallbackTranslations = [
+                { 
+                    id: 'en_sahih', 
+                    name: 'English - Sahih International',
+                    nameAr: 'الإنجليزية - صحيح دولي'
+                },
+                { 
+                    id: 'ur_jalandhry', 
+                    name: 'Urdu - Jalandhry',
+                    nameAr: 'الأردية - جالندھری'
+                },
+                { 
+                    id: 'tr_diyanet', 
+                    name: 'Turkish - Diyanet',
+                    nameAr: 'التركية - ديانت'
+                },
+                { 
+                    id: 'fr_hameidullah', 
+                    name: 'French - Hamidullah',
+                    nameAr: 'الفرنسية - حميد الله'
+                },
+                { 
+                    id: 'es_cortes', 
+                    name: 'Spanish - Cortes',
+                    nameAr: 'الإسبانية - كورتيس'
+                },
+                { 
+                    id: 'de_bubenheim', 
+                    name: 'German - Bubenheim',
+                    nameAr: 'الألمانية - بوبنهايم'
+                },
+                { 
+                    id: 'id_indonesian', 
+                    name: 'Indonesian - Indonesian',
+                    nameAr: 'الإندونيسية - الإندونيسية'
+                },
+                { 
+                    id: 'fa_ansarian', 
+                    name: 'Persian - Ansarian',
+                    nameAr: 'الفارسية - أنصاريان'
+                },
+                { 
+                    id: 'bn_bengali', 
+                    name: 'Bengali - Muhiyuddin Khan',
+                    nameAr: 'البنغالية - محيي الدين خان'
+                },
+                { 
+                    id: 'zh_jian', 
+                    name: 'Chinese - Ma Jian',
+                    nameAr: 'الصينية - ما جيان'
+                },
+                { 
+                    id: 'ru_kuliev', 
+                    name: 'Russian - Kuliev',
+                    nameAr: 'الروسية - كولييف'
+                },
+                { 
+                    id: 'ms_basmeih', 
+                    name: 'Malay - Basmeih',
+                    nameAr: 'الماليزية - بسميح'
+                },
+                { 
+                    id: 'it_piccardo', 
+                    name: 'Italian - Piccardo',
+                    nameAr: 'الإيطالية - بيكاردو'
+                },
+                { 
+                    id: 'pt_elhayek', 
+                    name: 'Portuguese - El Hayek',
+                    nameAr: 'البرتغالية - الحايك'
+                },
+                { 
+                    id: 'nl_keyzer', 
+                    name: 'Dutch - Keyzer',
+                    nameAr: 'الهولندية - كيزر'
+                },
+                { 
+                    id: 'hi_hindi', 
+                    name: 'Hindi - Farooq Khan',
+                    nameAr: 'الهندية - فاروق خان'
+                },
+                { 
+                    id: 'ta_tamil', 
+                    name: 'Tamil - Jan Trust',
+                    nameAr: 'التاميلية - جان تراست'
+                },
+                { 
+                    id: 'th_thai', 
+                    name: 'Thai - Royal Office',
+                    nameAr: 'التايلاندية - المكتب الملكي'
+                },
+                { 
+                    id: 'ja_japanese', 
+                    name: 'Japanese - Mori',
+                    nameAr: 'اليابانية - موري'
+                },
+                { 
+                    id: 'ko_korean', 
+                    name: 'Korean - Choi',
+                    nameAr: 'الكورية - تشوي'
+                },
+                { 
+                    id: 'ha_gumi', 
+                    name: 'Hausa - Gumi',
+                    nameAr: 'الهوسا - غومي'
+                },
+                { 
+                    id: 'sw_barwani', 
+                    name: 'Swahili - Barwani',
+                    nameAr: 'السواحيلية - بارواني'
+                }
+            ];
+            
+            const translationSelect = document.getElementById('videoTranslationSelect');
+            if (translationSelect) {
+                // Clear dropdown and add placeholder first
+                translationSelect.innerHTML = '';
+                
+                // Add placeholder option
+                const placeholderOption = document.createElement('option');
+                placeholderOption.value = '';
+                placeholderOption.textContent = currentLang === 'ar' ? 'اختر الترجمة' : 'Select Translation';
+                translationSelect.appendChild(placeholderOption);
+                
+                // Add fallback translations
+                fallbackTranslations.forEach(translation => {
+                    const option = document.createElement('option');
+                    option.value = translation.id;
+                    // Use Arabic name if in Arabic mode, otherwise use English name
+                    option.textContent = currentLang === 'ar' ? translation.nameAr : translation.name;
+                    translationSelect.appendChild(option);
+                });
+                console.log('loadVideoTranslations: Added fallback translations');
+                
+                // Set default selection to Sahih International
+                translationSelect.value = 'en_sahih';
             }
         }
     }
@@ -12169,6 +12333,17 @@ function loadPrayerOffsets() {
             });
         }
 
+        // Translation selection
+        const translationSelect = document.getElementById('videoTranslationSelect');
+        console.log('setupVideoEventListeners: Found translation select:', !!translationSelect);
+        if (translationSelect) {
+            translationSelect.addEventListener('change', (e) => {
+                console.log('setupVideoEventListeners: Translation selected:', e.target.value);
+                updateSelectedVerse();
+                updateVideoPreview();
+            });
+        }
+
 
 
         // Font size slider
@@ -12300,16 +12475,15 @@ function loadPrayerOffsets() {
     }
 
     // Update selected verse display
-    function updateSelectedVerse() {
-        if (!selectedVideoSurah || !selectedVideoAyah || !quranData || !translationData) {
-            document.getElementById('selectedVerseText').textContent = 'اختر سورة وآية لعرض النص';
-            document.getElementById('selectedVerseTranslation').textContent = 'Select a surah and ayah to display text';
+    async function updateSelectedVerse() {
+        if (!selectedVideoSurah || !selectedVideoAyah || !quranData) {
+            document.getElementById('selectedVerseText').textContent = currentLang === 'ar' ? 'اختر سورة وآية لعرض النص' : 'Select a surah and ayah to display text';
+            document.getElementById('selectedVerseTranslation').textContent = currentLang === 'ar' ? 'اختر سورة وآية لعرض الترجمة' : 'Select a surah and ayah to display translation';
             return;
         }
 
         const surah = quranData[selectedVideoSurah - 1];
         const ayah = surah.ayahs[selectedVideoAyah - 1];
-        const translation = translationData[selectedVideoSurah - 1].ayahs[selectedVideoAyah - 1];
 
         // Handle verse ranges
         let arabicText = '';
@@ -12318,17 +12492,33 @@ function loadPrayerOffsets() {
         const startVerse = selectedVideoAyah;
         const endVerse = selectedVideoAyahTo || selectedVideoAyah;
         
+        // Get Arabic text
         for (let i = startVerse; i <= endVerse; i++) {
             const currentAyah = surah.ayahs[i - 1];
-            const currentTranslation = translationData[selectedVideoSurah - 1].ayahs[i - 1];
-            
-            if (currentAyah && currentTranslation) {
+            if (currentAyah) {
                 if (arabicText) arabicText += ' ';
-                if (translationText) translationText += ' ';
-                
                 arabicText += currentAyah.text;
-                translationText += currentTranslation.text;
             }
+        }
+        
+        // Get translation text based on selected translation
+        const selectedTranslation = document.getElementById('videoTranslationSelect')?.value || 'en_sahih';
+        
+        try {
+            // For now, use the default translation data (Sahih International)
+            // In a full implementation, you would load the selected translation file
+            if (translationData) {
+                for (let i = startVerse; i <= endVerse; i++) {
+                    const currentTranslation = translationData[selectedVideoSurah - 1].ayahs[i - 1];
+                    if (currentTranslation) {
+                        if (translationText) translationText += ' ';
+                        translationText += currentTranslation.text;
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error loading translation:', error);
+            translationText = currentLang === 'ar' ? 'خطأ في تحميل الترجمة' : 'Error loading translation';
         }
         
         document.getElementById('selectedVerseText').textContent = arabicText;
@@ -12337,31 +12527,121 @@ function loadPrayerOffsets() {
         updateVideoPreview();
     }
 
-    // Preview audio
+    // Global variables for audio control
+    let currentPreviewAudio = null;
+    let isPreviewPlaying = false;
+
+    // Preview audio with play/stop functionality
     async function previewAudio() {
         if (!selectedVideoSurah || !selectedVideoAyah || !selectedVideoReciter) {
             showToast(currentLang === 'ar' ? 'يرجى اختيار السورة والآية والقارئ' : 'Please select surah, ayah, and reciter', 'warning');
             return;
         }
 
+        // If audio is already playing, stop it
+        if (isPreviewPlaying && currentPreviewAudio) {
+            stopPreviewAudio();
+            return;
+        }
+
         try {
             const apiBaseUrl = getApiBaseUrl();
-            const audioUrl = selectedVideoAyahTo 
-            ? `${apiBaseUrl}/api/verse-audio-range/${selectedVideoSurah}/${selectedVideoAyah}/${selectedVideoAyahTo}/${selectedVideoReciter}`
-            : `${apiBaseUrl}/api/verse-audio/${selectedVideoSurah}/${selectedVideoAyah}/${selectedVideoReciter}`;
+            // Always use single verse endpoint for preview - just play the first verse
+            const audioUrl = `${apiBaseUrl}/api/verse-audio/${selectedVideoSurah}/${selectedVideoAyah}/${selectedVideoReciter}`;
             console.log('audioUrl:', audioUrl);
-        const response = await fetch(audioUrl);
+            
+            const response = await fetch(audioUrl);
             const data = await response.json();
             console.log('data:', data);
-            const audio = new Audio(data.audioUrl);
-            audio.play();
             
-            showToast(currentLang === 'ar' ? 'جاري تشغيل الصوت...' : 'Playing audio...', 'info');
+            // Stop any currently playing audio
+            if (currentPreviewAudio) {
+                currentPreviewAudio.pause();
+                currentPreviewAudio = null;
+            }
+            
+            // Create and play new audio
+            currentPreviewAudio = new Audio(data.audioUrl);
+            isPreviewPlaying = true;
+            
+            // Update button to show stop state
+            updatePreviewAudioButton(true);
+            
+            // Add event listeners for audio state changes
+            currentPreviewAudio.addEventListener('ended', () => {
+                console.log('Audio playback ended');
+                isPreviewPlaying = false;
+                updatePreviewAudioButton(false);
+                currentPreviewAudio = null;
+            });
+            
+            currentPreviewAudio.addEventListener('error', (error) => {
+                console.error('Audio playback error:', error);
+                isPreviewPlaying = false;
+                updatePreviewAudioButton(false);
+                currentPreviewAudio = null;
+                showToast(currentLang === 'ar' ? 'فشل في تحميل الصوت - تحقق من اتصال الإنترنت' : 'Failed to load audio - check internet connection', 'error');
+            });
+            
+            await currentPreviewAudio.play();
+            
+            // Show appropriate message based on whether it's a range or single verse
+            const message = selectedVideoAyahTo 
+                ? (currentLang === 'ar' ? 'جاري تشغيل الآية الأولى من النطاق...' : 'Playing first ayah of range...')
+                : (currentLang === 'ar' ? 'جاري تشغيل الصوت...' : 'Playing audio...');
+            showToast(message, 'info');
         } catch (error) {
             console.error('Error playing audio:', error);
+            isPreviewPlaying = false;
+            updatePreviewAudioButton(false);
             showToast(currentLang === 'ar' ? 'فشل في تشغيل الصوت' : 'Failed to play audio', 'error');
         }
     }
+
+    // Stop preview audio
+    function stopPreviewAudio() {
+        if (currentPreviewAudio) {
+            currentPreviewAudio.pause();
+            currentPreviewAudio = null;
+        }
+        isPreviewPlaying = false;
+        updatePreviewAudioButton(false);
+        showToast(currentLang === 'ar' ? 'تم إيقاف الصوت' : 'Audio stopped', 'info');
+    }
+
+    // Update preview audio button appearance
+    function updatePreviewAudioButton(isPlaying) {
+        const previewAudioBtn = document.getElementById('previewAudioBtn');
+        
+        if (previewAudioBtn) {
+            if (isPlaying) {
+                // Change to stop button
+                previewAudioBtn.innerHTML = `
+                    <i class="fas fa-stop-circle text-lg"></i>
+                    <span id="previewAudioText">${currentLang === 'ar' ? 'إيقاف الصوت' : 'Stop Audio'}</span>
+                `;
+                previewAudioBtn.classList.remove('text-blue-600', 'dark:text-blue-400', 'hover:text-blue-800', 'dark:hover:text-blue-300');
+                previewAudioBtn.classList.add('text-red-600', 'dark:text-red-400', 'hover:text-red-800', 'dark:hover:text-red-300');
+            } else {
+                // Change back to play button
+                previewAudioBtn.innerHTML = `
+                    <i class="fas fa-play-circle text-lg"></i>
+                    <span id="previewAudioText">${currentLang === 'ar' ? 'استمع للآية' : 'Preview Audio'}</span>
+                `;
+                previewAudioBtn.classList.remove('text-red-600', 'dark:text-red-400', 'hover:text-red-800', 'dark:hover:text-red-300');
+                previewAudioBtn.classList.add('text-blue-600', 'dark:text-blue-400', 'hover:text-blue-800', 'dark:hover:text-blue-300');
+            }
+        }
+    }
+
+    // Cleanup preview audio when page is unloaded
+    window.addEventListener('beforeunload', () => {
+        if (currentPreviewAudio) {
+            currentPreviewAudio.pause();
+            currentPreviewAudio = null;
+        }
+        isPreviewPlaying = false;
+    });
     // Debounce function for preview generation
     let previewTimeout;
     function debounce(func, wait) {
@@ -12419,7 +12699,8 @@ function loadPrayerOffsets() {
                 textColor: document.getElementById('videoTextColor')?.value || '#ffffff',
                 fontSize: document.getElementById('videoFontSize')?.value || 48,
                 fontFamily: document.getElementById('videoFontFamily')?.value || 'Uthmanic Hafs',
-                orientation: document.getElementById('videoOrientation')?.value || 'landscape'
+                orientation: document.getElementById('videoOrientation')?.value || 'landscape',
+                translation: document.getElementById('videoTranslationSelect')?.value || 'en_sahih'
             };
 
             console.log('Requesting live preview generation...');
@@ -12710,8 +12991,12 @@ function loadPrayerOffsets() {
             formData.append('fontSize', document.getElementById('videoFontSize')?.value || 48);
             const selectedFont = document.getElementById('videoFontFamily')?.value || 'Uthmanic Hafs';
         console.log('generateVideo: Selected font from dropdown:', selectedFont);
-        formData.append('fontFamily', selectedFont);
+                    formData.append('fontFamily', selectedFont);
             formData.append('orientation', document.getElementById('videoOrientation')?.value || 'landscape');
+            
+            // Add translation parameter
+            const selectedTranslation = document.getElementById('videoTranslationSelect')?.value || 'en_sahih';
+            formData.append('translation', selectedTranslation);
 
 
 
@@ -12854,6 +13139,7 @@ function loadPrayerOffsets() {
             'fontFamilyLabel': currentLang === 'ar' ? 'نوع الخط' : 'Font Family',
             'fontSizeLabel': currentLang === 'ar' ? 'حجم الخط' : 'Font Size',
             'textColorLabel': currentLang === 'ar' ? 'لون النص' : 'Text Color',
+            'translationLabel': currentLang === 'ar' ? 'الترجمة' : 'Translation',
             'orientationLabel': currentLang === 'ar' ? 'الاتجاه' : 'Orientation',
             
             // Actions
@@ -12976,6 +13262,22 @@ function loadPrayerOffsets() {
             console.log(`Setting videoFontFamily direction to: ${newDir}, textAlign to: ${newAlign}`);
         }
 
+        const videoTranslationSelect = document.getElementById('videoTranslationSelect');
+        if (videoTranslationSelect) {
+            // Set direction to LTR for English, RTL for Arabic
+            const newDir = currentLang === 'ar' ? 'rtl' : 'ltr';
+            const newAlign = currentLang === 'ar' ? 'right' : 'left';
+            videoTranslationSelect.setAttribute('dir', newDir);
+            videoTranslationSelect.style.direction = newDir;
+            videoTranslationSelect.style.textAlign = newAlign;
+            console.log(`Setting videoTranslationSelect direction to: ${newDir}, textAlign to: ${newAlign}`);
+            
+            // Update placeholder text for translation dropdown
+            if (videoTranslationSelect.options.length > 0 && videoTranslationSelect.options[0].value === '') {
+                videoTranslationSelect.options[0].textContent = currentLang === 'ar' ? 'اختر الترجمة' : 'Select Translation';
+            }
+        }
+
         const videoOrientation = document.getElementById('videoOrientation');
         if (videoOrientation) {
             // Set direction to LTR for English, RTL for Arabic
@@ -13014,6 +13316,8 @@ function loadPrayerOffsets() {
         setTimeout(() => {
             updateReciterNames();
             updateFontNames();
+            updateTranslationNames();
+            updatePreviewAudioButton(isPreviewPlaying);
         }, 100);
         
         // Update orientation preview after language change
@@ -13076,6 +13380,67 @@ function loadPrayerOffsets() {
         
         console.log('Updated reciter names to:', currentLang);
     }
+
+    // Update translation names in dropdown based on current language
+    function updateTranslationNames() {
+        const translationSelect = document.getElementById('videoTranslationSelect');
+        if (!translationSelect) {
+            console.log('updateTranslationNames: translationSelect not found');
+            return;
+        }
+        
+        console.log('updateTranslationNames: Found translationSelect with', translationSelect.options.length, 'options');
+        
+        // Update placeholder option first (if it exists)
+        if (translationSelect.options.length > 0 && translationSelect.options[0].value === '') {
+            translationSelect.options[0].textContent = currentLang === 'ar' ? 'اختر الترجمة' : 'Select Translation';
+        }
+        
+        // Update each option's text content based on current language
+        Array.from(translationSelect.options).forEach(option => {
+            const translationId = option.value;
+            if (!translationId) return; // Skip placeholder option
+            
+            // Get the translation data from the API response (stored in a global variable or reload from API)
+            // For now, we'll use a simple mapping approach
+            const translationNames = {
+                'en_sahih': { en: 'English - Sahih International', ar: 'الإنجليزية - صحيح دولي' },
+                'ur_jalandhry': { en: 'Urdu - Jalandhry', ar: 'الأردية - جالندھری' },
+                'tr_diyanet': { en: 'Turkish - Diyanet', ar: 'التركية - ديانت' },
+                'fr_hameidullah': { en: 'French - Hamidullah', ar: 'الفرنسية - حميد الله' },
+                'es_cortes': { en: 'Spanish - Cortes', ar: 'الإسبانية - كورتيس' },
+                'de_bubenheim': { en: 'German - Bubenheim', ar: 'الألمانية - بوبنهايم' },
+                'id_indonesian': { en: 'Indonesian - Indonesian', ar: 'الإندونيسية - الإندونيسية' },
+                'fa_ansarian': { en: 'Persian - Ansarian', ar: 'الفارسية - أنصاريان' },
+                'bn_bengali': { en: 'Bengali - Muhiyuddin Khan', ar: 'البنغالية - محيي الدين خان' },
+                'zh_jian': { en: 'Chinese - Ma Jian', ar: 'الصينية - ما جيان' },
+                'ru_kuliev': { en: 'Russian - Kuliev', ar: 'الروسية - كولييف' },
+                'ms_basmeih': { en: 'Malay - Basmeih', ar: 'الماليزية - بسميح' },
+                'it_piccardo': { en: 'Italian - Piccardo', ar: 'الإيطالية - بيكاردو' },
+                'pt_elhayek': { en: 'Portuguese - El Hayek', ar: 'البرتغالية - الحايك' },
+                'nl_keyzer': { en: 'Dutch - Keyzer', ar: 'الهولندية - كيزر' },
+                'hi_hindi': { en: 'Hindi - Farooq Khan', ar: 'الهندية - فاروق خان' },
+                'ta_tamil': { en: 'Tamil - Jan Trust', ar: 'التاميلية - جان تراست' },
+                'th_thai': { en: 'Thai - Royal Office', ar: 'التايلاندية - المكتب الملكي' },
+                'ja_japanese': { en: 'Japanese - Mori', ar: 'اليابانية - موري' },
+                'ko_korean': { en: 'Korean - Choi', ar: 'الكورية - تشوي' },
+                'ha_gumi': { en: 'Hausa - Gumi', ar: 'الهوسا - غومي' },
+                'sw_barwani': { en: 'Swahili - Barwani', ar: 'السواحيلية - بارواني' }
+            };
+            
+            const translation = translationNames[translationId];
+            if (translation) {
+                const newText = currentLang === 'ar' ? translation.ar : translation.en;
+                option.textContent = newText;
+                console.log(`Updated translation ${translationId} to: ${newText}`);
+            } else {
+                console.log('No mapping found for translation ID:', translationId);
+            }
+        });
+        
+        console.log('Updated translation names to:', currentLang);
+    }
+
     // Update font names in dropdown based on current language
     function updateFontNames() {
         const fontSelect = document.getElementById('videoFontFamily');
