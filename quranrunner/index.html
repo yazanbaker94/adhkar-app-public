@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Quran Runner Game</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-header">
+            <div class="header-top">
+                <button id="backBtn" class="back-btn" onclick="window.location.href='../index.html'" title="Back to Main Page">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Back</span>
+                </button>
+                <h1>Quran Runner</h1>
+                <div class="header-spacer"></div>
+            </div>
+            <div class="score-display">
+                <span>Obstacles: <span id="obstacle-count">0</span>/3</span>
+                <span>Score: <span id="score">0</span></span>
+            </div>
+        </div>
+        
+        <canvas id="gameCanvas" width="800" height="400"></canvas>
+        
+        <div class="controls">
+            <p>Press SPACEBAR or click to jump!</p>
+            <button id="fullscreenBtn" class="fullscreen-btn">⛶ Fullscreen</button>
+        </div>
+        
+        <!-- Quran Challenge Modal -->
+        <div id="challengeModal" class="challenge-modal hidden">
+            <div class="challenge-content">
+                <h2>Complete the Verse</h2>
+                <div class="verse-display">
+                    <p id="verseText" class="arabic-text"></p>
+                </div>
+                <div class="word-options" id="wordOptions">
+                    <!-- Word options will be generated here -->
+                </div>
+                <div class="feedback" id="feedback"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="verses.js"></script>
+    <script src="player.js"></script>
+    <script src="obstacle.js"></script>
+    <script src="challenge.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>

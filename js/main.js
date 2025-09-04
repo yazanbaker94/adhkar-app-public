@@ -13068,6 +13068,12 @@ function loadPrayerOffsets() {
         const apiBaseUrl = getApiBaseUrl();
         link.href = `${apiBaseUrl}${window.generatedVideoInfo.downloadUrl}`;
         link.download = `quran-verse-${window.generatedVideoInfo.videoId}.mp4`;
+        
+        // Console log to see the download link
+        console.log('Download link:', link.href);
+        console.log('Download filename:', link.download);
+        console.log('Generated video info:', window.generatedVideoInfo);
+        
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);

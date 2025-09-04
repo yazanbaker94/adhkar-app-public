@@ -55,6 +55,9 @@ try {
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+
+
 // const httpsOptions = {
 //   key: fs.readFileSync('/etc/letsencrypt/live/api.sakinahtime.com/privkey.pem'),
 //   cert: fs.readFileSync('/etc/letsencrypt/live/api.sakinahtime.com/fullchain.pem')
@@ -66,7 +69,9 @@ const PORT = process.env.PORT || 3000;
 // https.createServer(httpsOptions, app).listen(443, () => {
 //   console.log('HTTPS Server running on port 443');
 // });
-// Middleware - Configure CORS to allow your frontend domain
+
+
+
 app.use(cors({
   origin: [
     'https://sakinahtime.com',
@@ -524,7 +529,7 @@ const languageFontMapping = {
   'de_bubenheim': 'Arial',
   'id_indonesian': 'Arial',
   'fa_ansarian': 'Arial',
-  'bn_bengali': 'Nirmala UI, Segoe UI, Arial',
+'bn_bengali': 'Noto Sans Bengali, Lohit Bengali, Mukta, Arial, sans-serif',
   'zh_jian': 'Microsoft YaHei, SimSun, Arial',
   'ru_kuliev': 'Arial',
   'ja_japanese': 'Meiryo, Yu Gothic, Arial',
@@ -536,7 +541,7 @@ const languageFontMapping = {
   'ta_tamil': 'Nirmala UI, Segoe UI, Arial',
   'th_thai': 'Leelawadee UI, Microsoft Sans Serif, Arial',
   'ja_japanese': 'Meiryo, Yu Gothic, Arial',
-  'ko_korean': 'Malgun Gothic, Arial',
+'ko_korean': 'Noto Sans CJK KR, sans-serif', // i installed this font on my system on linux
   'ha_gumi': 'Arial',
   'sw_barwani': 'Arial'
 };
@@ -1337,13 +1342,15 @@ app.post('/api/generate-video', upload.single('background'), async (req, res) =>
     const arabicTextHeight = Math.floor(videoHeight * 0.2); // 20% for Arabic
     
     // Dynamic height allocation based on text length - increase for very long verses
+    // Use the first verse's translation to determine height allocation
+    const firstVerseTranslation = verseTimings[0]?.translation || '';
     let translationHeightPercent = 0.15; // Default 15%
-    if (translationText.length > 1000) {
+    if (firstVerseTranslation.length > 1000) {
       translationHeightPercent = 0.25; // 25% for very long verses
-      console.log(`📏 Video gen: Very long verse detected (${translationText.length} chars) - using 25% height allocation`);
-    } else if (translationText.length > 500) {
+      console.log(`📏 Video gen: Very long verse detected (${firstVerseTranslation.length} chars) - using 25% height allocation`);
+    } else if (firstVerseTranslation.length > 500) {
       translationHeightPercent = 0.2; // 20% for long verses
-      console.log(`📏 Video gen: Long verse detected (${translationText.length} chars) - using 20% height allocation`);
+      console.log(`📏 Video gen: Long verse detected (${firstVerseTranslation.length} chars) - using 20% height allocation`);
     }
     const translationTextHeight = Math.floor(videoHeight * translationHeightPercent);
     
@@ -1375,7 +1382,7 @@ app.post('/api/generate-video', upload.single('background'), async (req, res) =>
       'de_bubenheim': 'Arial',
       'id_indonesian': 'Arial',
       'fa_ansarian': 'Arial',
-      'bn_bengali': 'Nirmala UI, Segoe UI, Arial',
+'bn_bengali': 'Noto Sans Bengali, Lohit Bengali, Mukta, Arial, sans-serif',
       'zh_jian': 'Microsoft YaHei, SimSun, Arial',
       'ru_kuliev': 'Arial',
       'ms_basmeih': 'Arial',
@@ -1386,7 +1393,7 @@ app.post('/api/generate-video', upload.single('background'), async (req, res) =>
       'ta_tamil': 'Nirmala UI, Segoe UI, Arial',
       'th_thai': 'Leelawadee UI, Microsoft Sans Serif, Arial',
       'ja_japanese': 'Meiryo, Yu Gothic, Arial',
-          'ko_korean': 'Malgun Gothic, Arial',
+'ko_korean': 'Noto Sans CJK KR, sans-serif', // i installed this font on my system on linux
     'ha_gumi': 'Arial',
     'sw_barwani': 'Arial'
     };

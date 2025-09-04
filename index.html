@@ -40,7 +40,7 @@
     <title>SakinahTime - سكينة</title>
     
     <!-- API Configuration: Uncomment and set this if your backend is on a different domain -->
-    <script>window.API_BASE_URL = 'https://api.sakinahtime.com';</script>
+    <script>window.API_BASE_URL = 'http://localhost:3000';</script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         // Configure Tailwind dark mode
@@ -676,7 +676,7 @@
             <div id="home" class="w-full flex flex-col items-center justify-center mt-4">
               <!-- Quick Access Cards -->
               <div class="max-w-4xl w-full px-4 mb-8">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   <!-- Morning Adhkar Card -->
                   <div class="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-xl border border-amber-200 dark:border-amber-800 p-6 hover:shadow-lg transition-all duration-300 cursor-pointer" onclick="loadAdhkar('sabah')">
                     <div class="flex items-center gap-4">
@@ -700,6 +700,20 @@
                       <div class="flex-1">
                         <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-1" id="eveningCardTitle">أذكار المساء</h3>
                         <p class="text-sm text-gray-600 dark:text-gray-300" id="eveningCardDesc">اختتم يومك بالذكر والاستغفار</p>
+                      </div>
+                      <i class="fas fa-chevron-left text-gray-400 dark:text-gray-500 arrow-icon"></i>
+                    </div>
+                  </div>
+
+                  <!-- Quran Runner Card -->
+                  <div class="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl border border-green-200 dark:border-green-800 p-6 hover:shadow-lg transition-all duration-300 cursor-pointer" onclick="window.location.href='/quranrunner'">
+                    <div class="flex items-center gap-4">
+                      <div class="bg-green-100 dark:bg-green-900/40 rounded-lg p-3">
+                        <i class="fas fa-running text-2xl text-green-600 dark:text-green-400"></i>
+                      </div>
+                      <div class="flex-1">
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-1" id="quranRunnerCardTitle">Quran Runner</h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-300" id="quranRunnerCardDesc">تطبيق تشغيل القرآن الكريم</p>
                       </div>
                       <i class="fas fa-chevron-left text-gray-400 dark:text-gray-500 arrow-icon"></i>
                     </div>
