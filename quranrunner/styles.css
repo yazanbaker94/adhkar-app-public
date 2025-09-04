@@ -23,56 +23,10 @@ body {
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
-/* Header Layout */
-.header-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 10px;
-}
-
-.header-spacer {
-    width: 60px; /* Same width as back button to center the title */
-}
-
 .game-header h1 {
     font-size: 2.5rem;
-    margin: 0;
+    margin-bottom: 20px;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-    flex: 1;
-    text-align: center;
-}
-
-/* Back Button */
-.back-btn {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-size: 0.9rem;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    min-width: 60px;
-    justify-content: center;
-}
-
-.back-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-}
-
-.back-btn:active {
-    transform: translateY(0);
-}
-
-.back-btn i {
-    font-size: 0.8rem;
 }
 
 .score-display {
@@ -115,25 +69,6 @@ body {
 @media (max-width: 768px) {
     .fullscreen-btn {
         display: none;
-    }
-    
-    /* Mobile back button adjustments */
-    .back-btn {
-        padding: 6px 12px;
-        font-size: 0.8rem;
-        min-width: 50px;
-    }
-    
-    .back-btn span {
-        display: none; /* Hide text on mobile, show only icon */
-    }
-    
-    .header-spacer {
-        width: 50px; /* Adjust for smaller back button */
-    }
-    
-    .game-header h1 {
-        font-size: 2rem;
     }
     
     /* Mobile rotation recommendation */
@@ -186,24 +121,6 @@ body {
     padding: 10px 20px;
     border-radius: 10px;
     backdrop-filter: blur(10px);
-}
-
-.game-container.fullscreen .header-top {
-    margin-bottom: 5px;
-}
-
-.game-container.fullscreen .back-btn {
-    padding: 6px 12px;
-    font-size: 0.8rem;
-    min-width: 50px;
-}
-
-.game-container.fullscreen .back-btn span {
-    display: none; /* Hide text in fullscreen, show only icon */
-}
-
-.game-container.fullscreen .header-spacer {
-    width: 50px;
 }
 
 .game-container.fullscreen .game-header h1 {
