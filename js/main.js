@@ -6302,7 +6302,7 @@ function showARUnsupported(errorType) {
                 const apiBaseUrl = getApiBaseUrl();
                 const response = await fetch(`${apiBaseUrl}/api/reciters`);
                 const reciters = await response.json();
-                
+                console.log("apiBaseUrl", apiBaseUrl);
                 // Clear current options
                 reciterSelect.innerHTML = '';
 
