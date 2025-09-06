@@ -1850,7 +1850,199 @@ app.post('/api/cleanup', (req, res) => {
   res.json({ cleanedCount });
 });
 
+// TikTok API Endpoints
+app.post('/api/tiktok/token', async (req, res) => {
+  try {
+    const { client_key, client_secret, code, grant_type, redirect_uri, code_verifier } = req.body;
+    
+    console.log('TikTok token exchange request:', { client_key, code, grant_type, has_code_verifier: !!code_verifier });
+    
+    const tokenUrl = 'https://open-api.tiktok.com/oauth/access_token/';
+    const tokenData = {
+      client_key,
+      client_secret,
+      code,
+      grant_type,
+      redirect_uri
+    };
+    
+    // Add code_verifier for PKCE if provided
+    if (code_verifier) {
+      tokenData.code_verifier = code_verifier;
+    }
+    
+    const response = await fetch(tokenUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams(tokenData)
+    });
+    
+    const data = await response.json();
+    console.log('TikTok token response:', data);
+    
+    if (response.ok) {
+      res.json(data);
+    } else {
+      res.status(400).json({ 
+        error: 'token_exchange_failed', 
+        message: data.message || 'Failed to exchange code for token' 
+      });
+    }
+  } catch (error) {
+    console.error('TikTok token exchange error:', error);
+    res.status(500).json({ 
+      error: 'server_error', 
+      message: 'Internal server error during token exchange' 
+    });
+  }
+});
+
+app.post('/api/tiktok/userinfo', async (req, res) => {
+  try {
+    const { access_token } = req.body;
+    
+    console.log('TikTok user info request for token:', access_token?.substring(0, 10) + '...');
+    
+    const userInfoUrl = 'https://open-api.tiktok.com/user/info/';
+    const userInfoData = {
+      access_token,
+      fields: 'open_id,union_id,avatar_url,display_name'
+    };
+    
+    const response = await fetch(userInfoUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams(userInfoData)
+    });
+    
+    const data = await response.json();
+    console.log('TikTok user info response:', data);
+    
+    if (response.ok) {
+      res.json(data);
+    } else {
+      res.status(400).json({ 
+        error: 'user_info_failed', 
+        message: data.message || 'Failed to get user information' 
+      });
+    }
+  } catch (error) {
+    console.error('TikTok user info error:', error);
+    res.status(500).json({ 
+      error: 'server_error', 
+      message: 'Internal server error during user info retrieval' 
+    });
+  }
+});
+
+app.post('/api/tiktok/upload', async (req, res) => {
+  try {
+    const { access_token, video_data, caption, privacy_level } = req.body;
+    
+    console.log('TikTok video upload request');
+    
+    // Step 1: Initialize upload
+    const initUrl = 'https://open-api.tiktok.com/share/video/upload/';
+    const initData = {
+      access_token,
+      source_info: JSON.stringify({
+        source: 'FILE_UPLOAD',
+        video_size: video_data.length,
+        chunk_size: 10000000, // 10MB chunks
+        total_chunk_count: Math.ceil(video_data.length / 10000000)
+      })
+    };
+    
+    const initResponse = await fetch(initUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams(initData)
+    });
+    
+    const initResult = await initResponse.json();
+    console.log('TikTok upload init response:', initResult);
+    
+    if (!initResponse.ok) {
+      return res.status(400).json({ 
+        error: 'upload_init_failed', 
+        message: initResult.message || 'Failed to initialize upload' 
+      });
+    }
+    
+    // Step 2: Upload video chunks (simplified for demo)
+    const uploadUrl = initResult.data.upload_url;
+    const uploadResponse = await fetch(uploadUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/octet-stream',
+      },
+      body: video_data
+    });
+    
+    if (!uploadResponse.ok) {
+      return res.status(400).json({ 
+        error: 'upload_failed', 
+        message: 'Failed to upload video data' 
+      });
+    }
+    
+    // Step 3: Publish video
+    const publishUrl = 'https://open-api.tiktok.com/share/video/publish/';
+    const publishData = {
+      access_token,
+      post_info: JSON.stringify({
+        title: caption || 'Islamic Content from SakinahTime',
+        privacy_level: privacy_level || 'MUTUAL_FOLLOW_FRIEND',
+        disable_duet: false,
+        disable_comment: false,
+        disable_stitch: false,
+        video_cover_timestamp_ms: 1000
+      }),
+      source_info: JSON.stringify({
+        source: 'FILE_UPLOAD',
+        video_size: video_data.length,
+        chunk_size: 10000000,
+        total_chunk_count: Math.ceil(video_data.length / 10000000)
+      })
+    };
+    
+    const publishResponse = await fetch(publishUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams(publishData)
+    });
+    
+    const publishResult = await publishResponse.json();
+    console.log('TikTok publish response:', publishResult);
+    
+    if (publishResponse.ok) {
+      res.json(publishResult);
+    } else {
+      res.status(400).json({ 
+        error: 'publish_failed', 
+        message: publishResult.message || 'Failed to publish video' 
+      });
+    }
+    
+  } catch (error) {
+    console.error('TikTok upload error:', error);
+    res.status(500).json({ 
+      error: 'server_error', 
+      message: 'Internal server error during video upload' 
+    });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Video generation API available at http://localhost:${PORT}`);
+  console.log(`TikTok API endpoints available at http://localhost:${PORT}/api/tiktok/`);
 }); 

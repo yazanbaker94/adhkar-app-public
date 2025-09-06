@@ -50,8 +50,7 @@
     <link rel="stylesheet" href="../styles/responsive.css">
     <link href="https://fonts.googleapis.com/css2?family=Amiri+Quran&display=swap" rel="stylesheet">
     
-    <!-- TikTok SDK -->
-    <script src="https://www.tiktok.com/embed.js"></script>
+    <!-- TikTok SDK removed to avoid conflicts with OAuth flow -->
 </head>
 
 <body class="bg-gradient-to-b from-gray-100 to-white dark:from-gray-900 dark:to-gray-800 text-gray-900 dark:text-gray-100 min-h-screen flex flex-col transition-colors duration-150 overflow-x-hidden">
@@ -302,11 +301,18 @@
     </footer>
 
     <script>
-        // TikTok API Configuration
+        // TikTok API Configuration - Sandbox Environment
         const TIKTOK_CONFIG = {
-            clientKey: 'YOUR_TIKTOK_CLIENT_KEY', // Replace with actual client key
+            clientKey: 'sbawr8lqg1a1mat439',
+            clientSecret: 'sbawr8lqg1a1mat439',
+            // Common redirect URIs for TikTok - you need to configure one of these in your TikTok Developer Console
             redirectUri: window.location.origin + '/posttotiktok/callback.html',
-            scopes: ['user.info.basic', 'video.upload', 'video.publish']
+            // Alternative redirect URIs you might need to configure:
+            // redirectUri: 'https://sakinahtime.com/posttotiktok/callback.html',
+            // redirectUri: 'http://localhost:3000/posttotiktok/callback.html',
+            scopes: ['user.info.basic', 'video.upload', 'video.publish'],
+            baseUrl: 'https://open-api.tiktok.com', // TikTok API base URL
+            sandboxMode: true
         };
 
         let currentUser = null;
@@ -315,19 +321,92 @@
         // Initialize TikTok Login
         function initiateTikTokLogin() {
             try {
-                // In a real implementation, this would redirect to TikTok OAuth
-                // For demo purposes, we'll simulate the login process
                 showToast('Initiating TikTok login...', 'info');
                 
-                // Simulate successful login after 2 seconds
-                setTimeout(() => {
-                    simulateSuccessfulLogin();
-                }, 2000);
+                // Generate PKCE parameters
+                const codeVerifier = generateCodeVerifier();
+                const codeChallenge = generateCodeChallenge(codeVerifier);
+                const state = generateRandomString(16);
+                
+                // Store PKCE parameters for later use
+                localStorage.setItem('tiktok_oauth_state', state);
+                localStorage.setItem('tiktok_code_verifier', codeVerifier);
+                
+                // Determine redirect URI based on environment
+                // TikTok requires HTTPS for all redirect URIs
+                let redirectUri;
+                
+                if (window.location.hostname === 'localhost') {
+                    // For localhost, use your production domain with HTTPS
+                    redirectUri = 'https://sakinahtime.com/posttotiktok/callback.html';
+                } else if (window.location.hostname === 'sakinahtime.com') {
+                    redirectUri = 'https://sakinahtime.com/posttotiktok/callback.html';
+                } else {
+                    // Fallback to production domain
+                    redirectUri = 'https://sakinahtime.com/posttotiktok/callback.html';
+                }
+                
+                // Build TikTok OAuth URL with PKCE
+                const authUrl = new URL('https://www.tiktok.com/v2/auth/authorize/');
+                authUrl.searchParams.append('client_key', TIKTOK_CONFIG.clientKey);
+                authUrl.searchParams.append('scope', TIKTOK_CONFIG.scopes.join(','));
+                authUrl.searchParams.append('response_type', 'code');
+                authUrl.searchParams.append('redirect_uri', redirectUri);
+                authUrl.searchParams.append('state', state);
+                authUrl.searchParams.append('code_challenge', codeChallenge);
+                authUrl.searchParams.append('code_challenge_method', 'S256');
+                
+                console.log('TikTok OAuth Configuration:');
+                console.log('- Client Key:', TIKTOK_CONFIG.clientKey);
+                console.log('- Redirect URI:', redirectUri);
+                console.log('- Scopes:', TIKTOK_CONFIG.scopes.join(','));
+                console.log('- State:', state);
+                console.log('- Code Challenge:', codeChallenge);
+                console.log('- Full OAuth URL:', authUrl.toString());
+                
+                // Show redirect URI in UI for debugging
+                showToast(`Redirect URI: ${redirectUri}`, 'info');
+                
+                // Redirect to TikTok OAuth
+                window.location.href = authUrl.toString();
                 
             } catch (error) {
                 console.error('TikTok login error:', error);
                 showToast('Login failed. Please try again.', 'error');
             }
+        }
+
+        // Generate code verifier for PKCE
+        function generateCodeVerifier() {
+            const array = new Uint8Array(32);
+            crypto.getRandomValues(array);
+            return base64URLEncode(array);
+        }
+
+        // Generate code challenge from code verifier
+        async function generateCodeChallenge(codeVerifier) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(codeVerifier);
+            const digest = await crypto.subtle.digest('SHA-256', data);
+            return base64URLEncode(new Uint8Array(digest));
+        }
+
+        // Base64 URL encode
+        function base64URLEncode(buffer) {
+            return btoa(String.fromCharCode(...buffer))
+                .replace(/\+/g, '-')
+                .replace(/\//g, '_')
+                .replace(/=/g, '');
+        }
+
+        // Generate random string for state parameter
+        function generateRandomString(length) {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let result = '';
+            for (let i = 0; i < length; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return result;
         }
 
         // Simulate successful login (for demo purposes)
@@ -408,9 +487,15 @@
         }
 
         // Publish video to TikTok
-        function publishToTikTok() {
+        async function publishToTikTok() {
             if (!currentUser || !uploadedVideo) {
                 showToast('Please login and select a video first', 'error');
+                return;
+            }
+
+            const accessToken = localStorage.getItem('tiktok_access_token');
+            if (!accessToken) {
+                showToast('Please login to TikTok first', 'error');
                 return;
             }
 
@@ -422,18 +507,75 @@
             const progressBar = document.getElementById('progressBar');
             const uploadStatus = document.getElementById('uploadStatus');
 
-            // Simulate upload progress
-            let progress = 0;
-            const interval = setInterval(() => {
-                progress += Math.random() * 20;
-                if (progress >= 100) {
-                    progress = 100;
-                    clearInterval(interval);
-                    simulatePublishSuccess(caption, privacy);
+            try {
+                // Convert video file to base64 for upload
+                uploadStatus.textContent = 'Preparing video...';
+                progressBar.style.width = '10%';
+
+                const videoData = await fileToBase64(uploadedVideo);
+                progressBar.style.width = '30%';
+                uploadStatus.textContent = 'Uploading to TikTok...';
+
+                // Upload to TikTok
+                const response = await fetch('/api/tiktok/upload', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        access_token: accessToken,
+                        video_data: videoData,
+                        caption: caption,
+                        privacy_level: privacy
+                    })
+                });
+
+                progressBar.style.width = '80%';
+                uploadStatus.textContent = 'Publishing...';
+
+                const result = await response.json();
+                
+                progressBar.style.width = '100%';
+                uploadStatus.textContent = 'Complete!';
+
+                if (response.ok) {
+                    setTimeout(() => {
+                        document.getElementById('uploadProgress').classList.add('hidden');
+                        document.getElementById('publishResult').classList.remove('hidden');
+                        
+                        const publishDetails = document.getElementById('publishDetails');
+                        publishDetails.innerHTML = `
+                            <strong>Video ID:</strong> ${result.data?.share_id || 'N/A'}<br>
+                            <strong>Caption:</strong> ${caption || 'No caption'}<br>
+                            <strong>Privacy:</strong> ${privacy}<br>
+                            <strong>Published:</strong> ${new Date().toLocaleString()}<br>
+                            <strong>Status:</strong> ${result.data?.status || 'Published'}
+                        `;
+
+                        showToast('Video published to TikTok successfully!', 'success');
+                    }, 1000);
+                } else {
+                    throw new Error(result.message || 'Upload failed');
                 }
-                progressBar.style.width = progress + '%';
-                uploadStatus.textContent = `Uploading... ${Math.round(progress)}%`;
-            }, 200);
+
+            } catch (error) {
+                console.error('TikTok upload error:', error);
+                document.getElementById('uploadProgress').classList.add('hidden');
+                showToast(`Upload failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Convert file to base64
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => {
+                    const base64 = reader.result.split(',')[1]; // Remove data:video/mp4;base64, prefix
+                    resolve(base64);
+                };
+                reader.onerror = error => reject(error);
+            });
         }
 
         // Simulate successful publish
@@ -507,7 +649,36 @@
 
         // Initialize the demo
         document.addEventListener('DOMContentLoaded', function() {
-            showToast('TikTok API Demo loaded. This is a demonstration for the TikTok application.', 'info');
+            // Check if user is already logged in
+            const accessToken = localStorage.getItem('tiktok_access_token');
+            const userInfo = localStorage.getItem('tiktok_user_info');
+            
+            if (accessToken && userInfo) {
+                try {
+                    currentUser = JSON.parse(userInfo);
+                    document.getElementById('loginButton').classList.add('hidden');
+                    document.getElementById('userInfo').classList.remove('hidden');
+                    
+                    document.getElementById('userDetails').innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <img src="${currentUser.avatar_url || 'https://via.placeholder.com/100x100/3B82F6/FFFFFF?text=IC'}" alt="User Avatar" class="w-10 h-10 rounded-full">
+                            <div>
+                                <p class="font-medium">${currentUser.display_name || 'TikTok User'}</p>
+                                <p class="text-xs text-gray-500">@${currentUser.open_id || 'user'}</p>
+                            </div>
+                        </div>
+                    `;
+                    
+                    updatePublishButton();
+                    showToast('Welcome back! You are logged in to TikTok.', 'success');
+                } catch (error) {
+                    console.error('Error parsing stored user info:', error);
+                    localStorage.removeItem('tiktok_user_info');
+                    localStorage.removeItem('tiktok_access_token');
+                }
+            }
+            
+            showToast('TikTok API Demo loaded with sandbox credentials.', 'info');
         });
     </script>
 

@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, height=device-height">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SakinahTime">
+    <meta name="apple-touch-fullscreen" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="msapplication-tap-highlight" content="no">
+    
+    <link rel="apple-touch-icon" href="../icon1.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="../icon1.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="../icon2.png">
+    <link rel="apple-touch-icon" sizes="167x167" href="../icon1.png">
+    
+    <link rel="manifest" href="../manifest.json">
+    <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
+    <link rel="shortcut icon" href="../favicon.ico">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Amiri+Quran:wght@400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Scheherazade+New:wght@400&display=swap" rel="stylesheet">
+    <title>TikTok OAuth Callback - SakinahTime</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            bg: '#1a1a1a',
+                            text: '#ffffff',
+                            primary: '#3B82F6',
+                            secondary: '#4B5563'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <link rel="stylesheet" href="../styles/base.css">
+    <link rel="stylesheet" href="../styles/animations.css">
+    <link rel="stylesheet" href="../styles/components.css">
+    <link rel="stylesheet" href="../styles/responsive.css">
+    <link href="https://fonts.googleapis.com/css2?family=Amiri+Quran&display=swap" rel="stylesheet">
+</head>
+
+<body class="bg-gradient-to-b from-gray-100 to-white dark:from-gray-900 dark:to-gray-800 text-gray-900 dark:text-gray-100 min-h-screen flex flex-col transition-colors duration-150 overflow-x-hidden">
+    
+    <!-- Header Section -->
+    <header class="bg-gradient-to-r from-white via-gray-50 to-white dark:from-gray-800 dark:via-gray-850 dark:to-gray-800 shadow-lg border-b border-gray-100 dark:border-gray-700">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between py-3 sm:py-4">
+                <div class="flex items-center gap-3">
+                    <div class="flex flex-col">
+                        <h1 class="text-lg sm:text-xl font-bold text-gray-800 dark:text-white">TikTok OAuth Callback</h1>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Processing authentication...</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-2">
+                    <i class="fab fa-tiktok text-2xl text-black dark:text-white"></i>
+                    <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">TikTok</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 max-w-4xl mx-auto px-4 py-8">
+        <div class="bg-white/90 dark:bg-gray-800/90 rounded-3xl shadow-2xl border border-white/20 dark:border-gray-700/50 p-6 sm:p-8">
+            
+            <div class="text-center mb-8">
+                <div class="bg-blue-100 dark:bg-blue-900/40 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-spinner fa-spin text-3xl text-blue-600 dark:text-blue-400"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-gray-800 dark:text-white mb-2">Processing TikTok Authentication</h1>
+                <p class="text-gray-600 dark:text-gray-400">Please wait while we complete your login...</p>
+            </div>
+
+            <div id="statusMessage" class="text-center">
+                <div class="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                    <div class="flex items-center justify-center gap-2">
+                        <i class="fas fa-info-circle text-blue-600 dark:text-blue-400"></i>
+                        <span class="text-blue-800 dark:text-blue-200 font-medium">Processing OAuth response...</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="errorMessage" class="hidden text-center mt-4">
+                <div class="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                    <div class="flex items-center justify-center gap-2">
+                        <i class="fas fa-exclamation-triangle text-red-600 dark:text-red-400"></i>
+                        <span class="text-red-800 dark:text-red-200 font-medium">Authentication failed</span>
+                    </div>
+                    <p id="errorDetails" class="text-sm text-red-700 dark:text-red-300 mt-2"></p>
+                    <button onclick="window.location.href='../posttotiktok/'" class="mt-3 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors duration-200">
+                        Try Again
+                    </button>
+                </div>
+            </div>
+
+            <div id="successMessage" class="hidden text-center mt-4">
+                <div class="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                    <div class="flex items-center justify-center gap-2">
+                        <i class="fas fa-check-circle text-green-600 dark:text-green-400"></i>
+                        <span class="text-green-800 dark:text-green-200 font-medium">Authentication successful!</span>
+                    </div>
+                    <p class="text-sm text-green-700 dark:text-green-300 mt-2">Redirecting you back to the demo...</p>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // TikTok API Configuration
+        const TIKTOK_CONFIG = {
+            clientKey: 'sbawr8lqg1a1mat439',
+            clientSecret: 'sbawr8lqg1a1mat439',
+            redirectUri: window.location.origin + '/posttotiktok/callback.html',
+            scopes: ['user.info.basic', 'video.upload', 'video.publish'],
+            baseUrl: 'https://open-api.tiktok.com',
+            sandboxMode: true
+        };
+
+        // Process OAuth callback
+        document.addEventListener('DOMContentLoaded', function() {
+            processOAuthCallback();
+        });
+
+        async function processOAuthCallback() {
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const code = urlParams.get('code');
+                const state = urlParams.get('state');
+                const error = urlParams.get('error');
+                const errorDescription = urlParams.get('error_description');
+
+                // Check for OAuth errors
+                if (error) {
+                    showError(`OAuth Error: ${error}`, errorDescription);
+                    return;
+                }
+
+                // Validate state parameter
+                const storedState = localStorage.getItem('tiktok_oauth_state');
+                if (!state || state !== storedState) {
+                    showError('Invalid state parameter', 'Security validation failed');
+                    return;
+                }
+
+                // Check if we have an authorization code
+                if (!code) {
+                    showError('No authorization code received', 'Please try logging in again');
+                    return;
+                }
+
+                // Get stored code verifier for PKCE
+                const codeVerifier = localStorage.getItem('tiktok_code_verifier');
+                if (!codeVerifier) {
+                    showError('Missing code verifier', 'PKCE validation failed');
+                    return;
+                }
+
+                console.log('OAuth callback received:', { code, state });
+
+                // Exchange code for access token with PKCE
+                const tokenResponse = await exchangeCodeForToken(code, codeVerifier);
+                
+                if (tokenResponse.success) {
+                    // Store tokens
+                    localStorage.setItem('tiktok_access_token', tokenResponse.access_token);
+                    localStorage.setItem('tiktok_refresh_token', tokenResponse.refresh_token);
+                    localStorage.setItem('tiktok_expires_in', tokenResponse.expires_in);
+                    localStorage.setItem('tiktok_token_type', tokenResponse.token_type);
+                    localStorage.setItem('tiktok_scope', tokenResponse.scope);
+
+                    // Clean up PKCE parameters
+                    localStorage.removeItem('tiktok_code_verifier');
+                    localStorage.removeItem('tiktok_oauth_state');
+
+                    // Get user info
+                    const userInfo = await getUserInfo(tokenResponse.access_token);
+                    
+                    if (userInfo.success) {
+                        localStorage.setItem('tiktok_user_info', JSON.stringify(userInfo.data));
+                        showSuccess();
+                        
+                        // Redirect back to main demo page after 2 seconds
+                        setTimeout(() => {
+                            window.location.href = '../posttotiktok/';
+                        }, 2000);
+                    } else {
+                        showError('Failed to get user information', userInfo.error);
+                    }
+                } else {
+                    showError('Failed to exchange code for token', tokenResponse.error);
+                }
+
+            } catch (error) {
+                console.error('OAuth callback error:', error);
+                showError('Unexpected error occurred', error.message);
+            }
+        }
+
+        async function exchangeCodeForToken(code, codeVerifier) {
+            try {
+                const response = await fetch('/api/tiktok/token', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        client_key: TIKTOK_CONFIG.clientKey,
+                        client_secret: TIKTOK_CONFIG.clientSecret,
+                        code: code,
+                        grant_type: 'authorization_code',
+                        redirect_uri: TIKTOK_CONFIG.redirectUri,
+                        code_verifier: codeVerifier
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    return { success: true, ...data };
+                } else {
+                    return { success: false, error: data.message || 'Token exchange failed' };
+                }
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        }
+
+        async function getUserInfo(accessToken) {
+            try {
+                const response = await fetch('/api/tiktok/userinfo', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        access_token: accessToken
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    return { success: true, data: data.data };
+                } else {
+                    return { success: false, error: data.message || 'Failed to get user info' };
+                }
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        }
+
+        function showError(title, details) {
+            document.getElementById('statusMessage').classList.add('hidden');
+            document.getElementById('errorMessage').classList.remove('hidden');
+            document.getElementById('errorDetails').textContent = details;
+            console.error('TikTok OAuth Error:', title, details);
+        }
+
+        function showSuccess() {
+            document.getElementById('statusMessage').classList.add('hidden');
+            document.getElementById('successMessage').classList.remove('hidden');
+        }
+    </script>
+
+</body>
+</html>
