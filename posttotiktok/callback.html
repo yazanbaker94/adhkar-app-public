@@ -221,7 +221,9 @@
                         client_key: TIKTOK_CONFIG.clientKey,
                         client_secret: TIKTOK_CONFIG.clientSecret,
                         code: code,
-                        grant_type: 'authorization_code'
+                        grant_type: 'authorization_code',
+                        redirect_uri: TIKTOK_CONFIG.redirectUri,
+                        code_verifier: codeVerifier
                     })
                 });
 

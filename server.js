@@ -1891,13 +1891,13 @@ app.get('/api/tiktok/test', (req, res) => {
 // Simple test endpoint for TikTok token exchange
 app.post('/api/tiktok/simple', async (req, res) => {
   try {
-    const { client_key, client_secret, code, grant_type, action, access_token } = req.body;
+    const { client_key, client_secret, code, grant_type, redirect_uri, code_verifier, action, access_token } = req.body;
     
     // Handle user info requests
     if (action === 'userinfo') {
       console.log('TikTok user info request for token:', access_token?.substring(0, 10) + '...');
       
-      const userInfoUrl = 'https://open-api.tiktok.com/user/info/';
+      const userInfoUrl = 'https://open.tiktokapis.com/v2/user/info/';
       const userInfoData = {
         access_token,
         fields: 'open_id,union_id,avatar_url,display_name'
@@ -1917,7 +1917,7 @@ app.post('/api/tiktok/simple', async (req, res) => {
     console.log('Simple TikTok token request:', { client_key, code, grant_type });
     
     // Use the correct TikTok API endpoint for token exchange
-    const tokenUrl = 'https://open-api.tiktok.com/oauth/access_token/';
+    const tokenUrl = 'https://open.tiktokapis.com/v2/oauth/token/';
     console.log('Using TikTok API endpoint:', tokenUrl);
     
     // Log all parameters being sent
@@ -1933,8 +1933,13 @@ app.post('/api/tiktok/simple', async (req, res) => {
       client_secret,
       code,
       grant_type: 'authorization_code',
-      redirect_uri: 'https://sakinahtime.com/posttotiktok/callback.html'
+      redirect_uri: redirect_uri || 'https://sakinahtime.com/posttotiktok/callback.html'
     };
+    
+    // Add code_verifier for PKCE if provided
+    if (code_verifier) {
+      tokenData.code_verifier = code_verifier;
+    }
     
     console.log('Sending to TikTok API:', tokenUrl);
     console.log('Token data:', tokenData);
@@ -1989,7 +1994,7 @@ app.post('/api/tiktok/test', async (req, res) => {
       }
       
       // Use sandbox endpoint for testing
-      const tokenUrl = 'https://open-api.tiktok.com/oauth/access_token/';
+      const tokenUrl = 'https://open.tiktokapis.com/v2/oauth/token/';
       
       // Try minimal parameters first - remove redirect_uri to see if that's the issue
       const tokenData = {
@@ -2045,7 +2050,7 @@ app.post('/api/tiktok/test', async (req, res) => {
         });
       }
       
-      const userInfoUrl = 'https://open-api.tiktok.com/user/info/';
+      const userInfoUrl = 'https://open.tiktokapis.com/v2/user/info/';
       const userInfoData = {
         access_token,
         fields: 'open_id,union_id,avatar_url,display_name'
@@ -2102,7 +2107,7 @@ app.post('/api/tiktok/token', async (req, res) => {
     
     console.log('TikTok token exchange request:', { client_key, code, grant_type, has_code_verifier: !!code_verifier });
     
-    const tokenUrl = 'https://open-api.tiktok.com/oauth/access_token/';
+    const tokenUrl = 'https://open.tiktokapis.com/v2/oauth/token/';
     const tokenData = {
       client_key,
       client_secret,
@@ -2150,7 +2155,7 @@ app.post('/api/tiktok/userinfo', async (req, res) => {
     
     console.log('TikTok user info request for token:', access_token?.substring(0, 10) + '...');
     
-    const userInfoUrl = 'https://open-api.tiktok.com/user/info/';
+    const userInfoUrl = 'https://open.tiktokapis.com/v2/user/info/';
     const userInfoData = {
       access_token,
       fields: 'open_id,union_id,avatar_url,display_name'
@@ -2191,7 +2196,7 @@ app.post('/api/auth/tiktok-token', async (req, res) => {
     
     console.log('TikTok token exchange request (alt):', { client_key, code, grant_type, has_code_verifier: !!code_verifier });
     
-    const tokenUrl = 'https://open-api.tiktok.com/oauth/access_token/';
+    const tokenUrl = 'https://open.tiktokapis.com/v2/oauth/token/';
     const tokenData = {
       client_key,
       client_secret,
@@ -2239,7 +2244,7 @@ app.post('/api/auth/tiktok-userinfo', async (req, res) => {
     
     console.log('TikTok user info request (alt) for token:', access_token?.substring(0, 10) + '...');
     
-    const userInfoUrl = 'https://open-api.tiktok.com/user/info/';
+    const userInfoUrl = 'https://open.tiktokapis.com/v2/user/info/';
     const userInfoData = {
       access_token,
       fields: 'open_id,union_id,avatar_url,display_name'
