@@ -211,7 +211,8 @@
 
         async function exchangeCodeForToken(code, codeVerifier) {
             try {
-                const response = await fetch('/api/tiktok/token', {
+                // Try alternative endpoint first
+                const response = await fetch('/api/auth/tiktok-token', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -240,7 +241,8 @@
 
         async function getUserInfo(accessToken) {
             try {
-                const response = await fetch('/api/tiktok/userinfo', {
+                // Try alternative endpoint first
+                const response = await fetch('/api/auth/tiktok-userinfo', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
