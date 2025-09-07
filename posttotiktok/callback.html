@@ -211,13 +211,14 @@
 
         async function exchangeCodeForToken(code, codeVerifier) {
             try {
-                // Try alternative endpoint first
-                const response = await fetch('/api/auth/tiktok-token', {
+                // Use working endpoint with action parameter
+                const response = await fetch('/api/tiktok/test', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
+                        action: 'token',
                         client_key: TIKTOK_CONFIG.clientKey,
                         client_secret: TIKTOK_CONFIG.clientSecret,
                         code: code,
@@ -241,13 +242,14 @@
 
         async function getUserInfo(accessToken) {
             try {
-                // Try alternative endpoint first
-                const response = await fetch('/api/auth/tiktok-userinfo', {
+                // Use working endpoint with action parameter
+                const response = await fetch('/api/tiktok/test', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
+                        action: 'userinfo',
                         access_token: accessToken
                     })
                 });
