@@ -1853,9 +1853,24 @@ app.post('/api/cleanup', (req, res) => {
 // TikTok API Endpoints - Using different path to avoid blocking
 // Add CORS support for TikTok endpoints
 app.use('/api/tiktok', (req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
+  const origin = req.headers.origin;
+  const allowedOrigins = [
+    'https://sakinahtime.com',
+    'https://www.sakinahtime.com',
+    'http://localhost:3000',
+    'http://localhost:8000',
+    'http://127.0.0.1:3000'
+  ];
+  
+  if (allowedOrigins.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+  } else {
+    res.header('Access-Control-Allow-Origin', '*');
+  }
+  
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.header('Access-Control-Allow-Credentials', 'true');
   
   if (req.method === 'OPTIONS') {
     res.sendStatus(200);
@@ -1873,9 +1888,84 @@ app.get('/api/tiktok/test', (req, res) => {
   });
 });
 
+// Simple test endpoint for TikTok token exchange
+app.post('/api/tiktok/simple', async (req, res) => {
+  try {
+    const { client_key, client_secret, code, grant_type, action, access_token } = req.body;
+    
+    // Handle user info requests
+    if (action === 'userinfo') {
+      console.log('TikTok user info request for token:', access_token?.substring(0, 10) + '...');
+      
+      const userInfoUrl = 'https://open-api.tiktok.com/user/info/';
+      const userInfoData = {
+        access_token,
+        fields: 'open_id,union_id,avatar_url,display_name'
+      };
+      
+      const response = await axios.post(userInfoUrl, new URLSearchParams(userInfoData), {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        }
+      });
+      
+      console.log('TikTok user info response:', response.data);
+      res.json(response.data);
+      return;
+    }
+    
+    console.log('Simple TikTok token request:', { client_key, code, grant_type });
+    
+    // Use the correct TikTok API endpoint for token exchange
+    const tokenUrl = 'https://open-api.tiktok.com/oauth/access_token/';
+    console.log('Using TikTok API endpoint:', tokenUrl);
+    
+    // Log all parameters being sent
+    console.log('All parameters being sent to TikTok:', {
+      client_key,
+      client_secret: client_secret ? '***' + client_secret.slice(-4) : 'missing',
+      code,
+      grant_type: 'authorization_code',
+      redirect_uri: 'https://sakinahtime.com/posttotiktok/callback.html'
+    });
+    const tokenData = {
+      client_key,
+      client_secret,
+      code,
+      grant_type: 'authorization_code',
+      redirect_uri: 'https://sakinahtime.com/posttotiktok/callback.html'
+    };
+    
+    console.log('Sending to TikTok API:', tokenUrl);
+    console.log('Token data:', tokenData);
+    
+    // Use form data format as per TikTok documentation
+    const response = await axios.post(tokenUrl, new URLSearchParams(tokenData), {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      }
+    });
+    
+    console.log('TikTok token response:', response.data);
+    res.json(response.data);
+    
+  } catch (error) {
+    console.error('TikTok API error:', error.response?.data || error.message);
+    res.status(500).json({ 
+      error: 'fetch_error', 
+      message: 'Failed to connect to TikTok API',
+      details: error.response?.data || error.message
+    });
+  }
+});
+
 // Use existing working endpoint for TikTok token exchange
 app.post('/api/tiktok/test', async (req, res) => {
   try {
+    console.log('=== TikTok API Request Received ===');
+    console.log('Request method:', req.method);
+    console.log('Request URL:', req.url);
+    console.log('Request headers:', req.headers);
     console.log('Full request body received:', JSON.stringify(req.body, null, 2));
     const { action, client_key, client_secret, code, grant_type, redirect_uri, code_verifier, access_token } = req.body;
     
@@ -1890,50 +1980,54 @@ app.post('/api/tiktok/test', async (req, res) => {
         redirect_uri
       });
       
-      // Validate required parameters
-      if (!client_key || !client_secret || !code || !grant_type || !redirect_uri) {
+      // Validate required parameters (redirect_uri is optional for some flows)
+      if (!client_key || !client_secret || !code || !grant_type) {
         return res.status(400).json({ 
           error: 'missing_parameters', 
           message: 'Missing required parameters for token exchange' 
         });
       }
       
+      // Use sandbox endpoint for testing
       const tokenUrl = 'https://open-api.tiktok.com/oauth/access_token/';
+      
+      // Try minimal parameters first - remove redirect_uri to see if that's the issue
       const tokenData = {
         client_key,
         client_secret,
         code,
-        grant_type,
-        redirect_uri
+        grant_type: 'authorization_code'
       };
       
-      // Add code_verifier for PKCE if provided
-      if (code_verifier) {
-        tokenData.code_verifier = code_verifier;
+      // Only add redirect_uri if it's provided
+      if (redirect_uri) {
+        tokenData.redirect_uri = redirect_uri;
       }
       
+      // Try without PKCE first to isolate the issue
+      // Only add code_verifier if it's provided and not empty
+      if (code_verifier && code_verifier.trim() !== '') {
+        console.log('Adding PKCE code_verifier');
+        tokenData.code_verifier = code_verifier;
+      } else {
+        console.log('Skipping PKCE code_verifier');
+      }
+      
+      console.log('Sending to TikTok API:', tokenUrl);
+      console.log('Token data:', tokenData);
+      
       try {
-        const response = await fetch(tokenUrl, {
-          method: 'POST',
+        const response = await axios.post(tokenUrl, new URLSearchParams(tokenData), {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          body: new URLSearchParams(tokenData)
+          }
         });
         
-        const data = await response.json();
-        console.log('TikTok token response (via test):', data);
+        console.log('TikTok token response (via test):', response.data);
+        res.json(response.data);
         
-        if (response.ok) {
-          res.json(data);
-        } else {
-          res.status(400).json({ 
-            error: 'token_exchange_failed', 
-            message: data.message || 'Failed to exchange code for token' 
-          });
-        }
       } catch (fetchError) {
-        console.error('TikTok API fetch error:', fetchError);
+        console.error('TikTok API fetch error:', fetchError.response?.data || fetchError.message);
         res.status(500).json({ 
           error: 'fetch_error', 
           message: 'Failed to connect to TikTok API' 
@@ -1958,27 +2052,17 @@ app.post('/api/tiktok/test', async (req, res) => {
       };
       
       try {
-        const response = await fetch(userInfoUrl, {
-          method: 'POST',
+        const response = await axios.post(userInfoUrl, new URLSearchParams(userInfoData), {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          body: new URLSearchParams(userInfoData)
+          }
         });
         
-        const data = await response.json();
-        console.log('TikTok user info response (via test):', data);
+        console.log('TikTok user info response (via test):', response.data);
+        res.json(response.data);
         
-        if (response.ok) {
-          res.json(data);
-        } else {
-          res.status(400).json({ 
-            error: 'user_info_failed', 
-            message: data.message || 'Failed to get user information' 
-          });
-        }
       } catch (fetchError) {
-        console.error('TikTok API fetch error:', fetchError);
+        console.error('TikTok API fetch error:', fetchError.response?.data || fetchError.message);
         res.status(500).json({ 
           error: 'fetch_error', 
           message: 'Failed to connect to TikTok API' 
