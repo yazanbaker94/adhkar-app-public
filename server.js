@@ -1876,11 +1876,27 @@ app.get('/api/tiktok/test', (req, res) => {
 // Use existing working endpoint for TikTok token exchange
 app.post('/api/tiktok/test', async (req, res) => {
   try {
+    console.log('Full request body received:', JSON.stringify(req.body, null, 2));
     const { action, client_key, client_secret, code, grant_type, redirect_uri, code_verifier, access_token } = req.body;
     
     if (action === 'token') {
       // Handle token exchange
-      console.log('TikTok token exchange request (via test):', { client_key, code, grant_type, has_code_verifier: !!code_verifier });
+      console.log('TikTok token exchange request (via test):', { 
+        client_key, 
+        code: code ? code.substring(0, 20) + '...' : 'missing', 
+        grant_type, 
+        has_code_verifier: !!code_verifier,
+        code_verifier: code_verifier ? code_verifier.substring(0, 10) + '...' : 'missing',
+        redirect_uri
+      });
+      
+      // Validate required parameters
+      if (!client_key || !client_secret || !code || !grant_type || !redirect_uri) {
+        return res.status(400).json({ 
+          error: 'missing_parameters', 
+          message: 'Missing required parameters for token exchange' 
+        });
+      }
       
       const tokenUrl = 'https://open-api.tiktok.com/oauth/access_token/';
       const tokenData = {
@@ -1896,28 +1912,44 @@ app.post('/api/tiktok/test', async (req, res) => {
         tokenData.code_verifier = code_verifier;
       }
       
-      const response = await fetch(tokenUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams(tokenData)
-      });
-      
-      const data = await response.json();
-      console.log('TikTok token response (via test):', data);
-      
-      if (response.ok) {
-        res.json(data);
-      } else {
-        res.status(400).json({ 
-          error: 'token_exchange_failed', 
-          message: data.message || 'Failed to exchange code for token' 
+      try {
+        const response = await fetch(tokenUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams(tokenData)
+        });
+        
+        const data = await response.json();
+        console.log('TikTok token response (via test):', data);
+        
+        if (response.ok) {
+          res.json(data);
+        } else {
+          res.status(400).json({ 
+            error: 'token_exchange_failed', 
+            message: data.message || 'Failed to exchange code for token' 
+          });
+        }
+      } catch (fetchError) {
+        console.error('TikTok API fetch error:', fetchError);
+        res.status(500).json({ 
+          error: 'fetch_error', 
+          message: 'Failed to connect to TikTok API' 
         });
       }
     } else if (action === 'userinfo') {
       // Handle user info
       console.log('TikTok user info request (via test) for token:', access_token?.substring(0, 10) + '...');
+      
+      // Validate required parameters
+      if (!access_token) {
+        return res.status(400).json({ 
+          error: 'missing_parameters', 
+          message: 'Missing access_token for user info request' 
+        });
+      }
       
       const userInfoUrl = 'https://open-api.tiktok.com/user/info/';
       const userInfoData = {
@@ -1925,23 +1957,31 @@ app.post('/api/tiktok/test', async (req, res) => {
         fields: 'open_id,union_id,avatar_url,display_name'
       };
       
-      const response = await fetch(userInfoUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams(userInfoData)
-      });
-      
-      const data = await response.json();
-      console.log('TikTok user info response (via test):', data);
-      
-      if (response.ok) {
-        res.json(data);
-      } else {
-        res.status(400).json({ 
-          error: 'user_info_failed', 
-          message: data.message || 'Failed to get user information' 
+      try {
+        const response = await fetch(userInfoUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams(userInfoData)
+        });
+        
+        const data = await response.json();
+        console.log('TikTok user info response (via test):', data);
+        
+        if (response.ok) {
+          res.json(data);
+        } else {
+          res.status(400).json({ 
+            error: 'user_info_failed', 
+            message: data.message || 'Failed to get user information' 
+          });
+        }
+      } catch (fetchError) {
+        console.error('TikTok API fetch error:', fetchError);
+        res.status(500).json({ 
+          error: 'fetch_error', 
+          message: 'Failed to connect to TikTok API' 
         });
       }
     } else {
