@@ -1960,9 +1960,29 @@ app.post('/api/tiktok/simple', async (req, res) => {
   }
 });
 
-// TikTok video upload endpoint
-app.post('/api/tiktok/upload', async (req, res) => {
+// TikTok video upload endpoint with increased body size limit
+app.post('/api/tiktok/upload', express.json({ limit: '50mb' }), async (req, res) => {
   try {
+    // Add CORS headers
+    const origin = req.headers.origin;
+    const allowedOrigins = [
+      'https://sakinahtime.com',
+      'https://www.sakinahtime.com',
+      'http://localhost:3000',
+      'http://localhost:8000',
+      'http://127.0.0.1:3000'
+    ];
+    
+    if (allowedOrigins.includes(origin)) {
+      res.header('Access-Control-Allow-Origin', origin);
+    } else {
+      res.header('Access-Control-Allow-Origin', '*');
+    }
+    
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    
     const { access_token, video_data, caption, privacy_level } = req.body;
     
     console.log('TikTok video upload request:', { 
@@ -1987,6 +2007,29 @@ app.post('/api/tiktok/upload', async (req, res) => {
       message: 'Failed to upload video to TikTok' 
     });
   }
+});
+
+// Handle OPTIONS request for upload endpoint
+app.options('/api/tiktok/upload', (req, res) => {
+  const origin = req.headers.origin;
+  const allowedOrigins = [
+    'https://sakinahtime.com',
+    'https://www.sakinahtime.com',
+    'http://localhost:3000',
+    'http://localhost:8000',
+    'http://127.0.0.1:3000'
+  ];
+  
+  if (allowedOrigins.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+  } else {
+    res.header('Access-Control-Allow-Origin', '*');
+  }
+  
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.sendStatus(200);
 });
 
 // Use existing working endpoint for TikTok token exchange
