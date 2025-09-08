@@ -1897,20 +1897,16 @@ app.post('/api/tiktok/simple', async (req, res) => {
     if (action === 'userinfo') {
       console.log('TikTok user info request for token:', access_token?.substring(0, 10) + '...');
       
-      const userInfoUrl = 'https://open.tiktokapis.com/v2/user/info/';
-      const userInfoData = {
-        access_token,
-        fields: 'open_id,union_id,avatar_url,display_name'
-      };
+      const userInfoUrl = 'https://open.tiktokapis.com/v2/user/info/?fields=open_id,union_id,avatar_url,display_name';
       
-      const response = await axios.post(userInfoUrl, new URLSearchParams(userInfoData), {
+      const response = await axios.get(userInfoUrl, {
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
+          'Authorization': `Bearer ${access_token}`,
         }
       });
       
       console.log('TikTok user info response:', response.data);
-      res.json(response.data);
+      res.json(response.data.data.user);
       return;
     }
     
