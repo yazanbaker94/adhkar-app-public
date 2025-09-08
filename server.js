@@ -1992,12 +1992,86 @@ app.post('/api/tiktok/upload', express.json({ limit: '50mb' }), async (req, res)
       privacy_level: privacy_level
     });
     
-    // For now, return a mock success response
-    // In a real implementation, you would upload to TikTok's API
+    // Step 1: Initialize video upload using TikTok Content Posting API
+    const initUrl = 'https://open.tiktokapis.com/v2/post/publish/inbox/video/init/';
+    
+    // Convert base64 to buffer to get accurate size
+    const videoBuffer = Buffer.from(video_data, 'base64');
+    const actualVideoSize = videoBuffer.length;
+    
+    const initData = {
+      source_info: {
+        source: 'FILE_UPLOAD',
+        video_size: actualVideoSize,
+        chunk_size: actualVideoSize, // Use actual video size for single chunk
+        total_chunk_count: 1
+      }
+    };
+
+    console.log('Calling TikTok video upload API...');
+    const uploadResponse = await axios.post(initUrl, initData, {
+      headers: {
+        'Authorization': `Bearer ${access_token}`,
+        'Content-Type': 'application/json',
+      }
+    });
+
+    console.log('TikTok upload response:', uploadResponse.data);
+    
+    if (uploadResponse.data.error && uploadResponse.data.error.code !== 'ok') {
+      console.log('TikTok API Error Details:', uploadResponse.data.error);
+      throw new Error(`TikTok upload failed: ${uploadResponse.data.error.message || JSON.stringify(uploadResponse.data.error)}`);
+    }
+
+    const publishId = uploadResponse.data.data.publish_id;
+    const uploadUrl = uploadResponse.data.data.upload_url;
+    
+    console.log('Step 1 Complete - Upload initialized:', { publishId, uploadUrl });
+    
+    // Step 2: Upload the actual video file to TikTok
+    console.log('Step 2 - Uploading video file to TikTok...');
+    
+    // Use the same buffer we created earlier
+    const videoSize = actualVideoSize;
+    
+    // Upload video using PUT request to the upload_url
+    const uploadResult = await axios.put(uploadUrl, videoBuffer, {
+      headers: {
+        'Content-Range': `bytes 0-${videoSize - 1}/${videoSize}`,
+        'Content-Type': 'video/mp4',
+        'Content-Length': videoSize.toString()
+      },
+      maxContentLength: Infinity,
+      maxBodyLength: Infinity
+    });
+    
+    console.log('Step 2 Complete - Video uploaded:', uploadResult.status);
+    
+    // Step 3: Check upload status
+    console.log('Step 3 - Checking upload status...');
+    
+    const statusUrl = 'https://open.tiktokapis.com/v2/post/publish/status/fetch/';
+    const statusResponse = await axios.post(statusUrl, {
+      publish_id: publishId
+    }, {
+      headers: {
+        'Authorization': `Bearer ${access_token}`,
+        'Content-Type': 'application/json; charset=UTF-8'
+      }
+    });
+    
+    console.log('Step 3 Complete - Status check:', statusResponse.data);
+    
     res.json({
       success: true,
-      message: 'Video uploaded successfully (demo mode)',
-      video_id: 'demo_video_' + Date.now()
+      message: 'Video uploaded and processed successfully with TikTok',
+      publish_id: publishId,
+      upload_url: uploadUrl,
+      status: statusResponse.data.data?.status || 'uploaded',
+      video_size: videoSize,
+      upload_status: uploadResult.status,
+      status_check: statusResponse.data,
+      api_used: 'TikTok Content Posting API - Complete upload flow'
     });
     
   } catch (error) {

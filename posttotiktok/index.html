@@ -552,11 +552,13 @@
                         
                         const publishDetails = document.getElementById('publishDetails');
                         publishDetails.innerHTML = `
-                            <strong>Video ID:</strong> ${result.data?.share_id || 'N/A'}<br>
+                            <strong>Video ID:</strong> ${result.publish_id || 'N/A'}<br>
                             <strong>Caption:</strong> ${caption || 'No caption'}<br>
                             <strong>Privacy:</strong> ${privacy}<br>
                             <strong>Published:</strong> ${new Date().toLocaleString()}<br>
-                            <strong>Status:</strong> ${result.data?.status || 'Published'}
+                            <strong>Status:</strong> ${result.status || 'Published'}<br>
+                            <strong>Video Size:</strong> ${result.video_size || 'N/A'} bytes<br>
+                            <strong>API Used:</strong> ${result.api_used || 'TikTok Content Posting API'}
                         `;
 
                         showToast('Video published to TikTok successfully!', 'success');
