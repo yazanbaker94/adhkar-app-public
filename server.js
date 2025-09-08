@@ -1960,6 +1960,35 @@ app.post('/api/tiktok/simple', async (req, res) => {
   }
 });
 
+// TikTok video upload endpoint
+app.post('/api/tiktok/upload', async (req, res) => {
+  try {
+    const { access_token, video_data, caption, privacy_level } = req.body;
+    
+    console.log('TikTok video upload request:', { 
+      has_access_token: !!access_token,
+      has_video_data: !!video_data,
+      caption: caption,
+      privacy_level: privacy_level
+    });
+    
+    // For now, return a mock success response
+    // In a real implementation, you would upload to TikTok's API
+    res.json({
+      success: true,
+      message: 'Video uploaded successfully (demo mode)',
+      video_id: 'demo_video_' + Date.now()
+    });
+    
+  } catch (error) {
+    console.error('TikTok upload error:', error);
+    res.status(500).json({ 
+      error: 'upload_failed', 
+      message: 'Failed to upload video to TikTok' 
+    });
+  }
+});
+
 // Use existing working endpoint for TikTok token exchange
 app.post('/api/tiktok/test', async (req, res) => {
   try {

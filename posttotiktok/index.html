@@ -517,7 +517,7 @@
                 uploadStatus.textContent = 'Uploading to TikTok...';
 
                 // Upload to TikTok
-                const response = await fetch('/api/tiktok/upload', {
+                const response = await fetch('https://api.sakinahtime.com/api/tiktok/upload', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
