@@ -1992,7 +1992,7 @@ app.post('/api/tiktok/upload', express.json({ limit: '50mb' }), async (req, res)
       privacy_level: privacy_level
     });
     
-    // Step 1: Initialize video upload using TikTok Content Posting API
+    // Step 1: Initialize INBOX UPLOAD using TikTok Content Posting API (sandbox compatible)
     const initUrl = 'https://open.tiktokapis.com/v2/post/publish/inbox/video/init/';
     
     // Convert base64 to buffer to get accurate size
@@ -2003,16 +2003,16 @@ app.post('/api/tiktok/upload', express.json({ limit: '50mb' }), async (req, res)
       source_info: {
         source: 'FILE_UPLOAD',
         video_size: actualVideoSize,
-        chunk_size: actualVideoSize, // Use actual video size for single chunk
+        chunk_size: actualVideoSize, // Use full video size for single chunk
         total_chunk_count: 1
       }
     };
 
-    console.log('Calling TikTok video upload API...');
+    console.log('Calling TikTok INBOX UPLOAD API...');
     const uploadResponse = await axios.post(initUrl, initData, {
       headers: {
         'Authorization': `Bearer ${access_token}`,
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json; charset=UTF-8',
       }
     });
 
@@ -2034,12 +2034,11 @@ app.post('/api/tiktok/upload', express.json({ limit: '50mb' }), async (req, res)
     // Use the same buffer we created earlier
     const videoSize = actualVideoSize;
     
-    // Upload video using PUT request to the upload_url
+    // Upload video using PUT request to the upload_url (Direct Post)
     const uploadResult = await axios.put(uploadUrl, videoBuffer, {
       headers: {
         'Content-Range': `bytes 0-${videoSize - 1}/${videoSize}`,
-        'Content-Type': 'video/mp4',
-        'Content-Length': videoSize.toString()
+        'Content-Type': 'video/mp4'
       },
       maxContentLength: Infinity,
       maxBodyLength: Infinity
@@ -2064,21 +2063,29 @@ app.post('/api/tiktok/upload', express.json({ limit: '50mb' }), async (req, res)
     
     res.json({
       success: true,
-      message: 'Video uploaded and processed successfully with TikTok',
+      message: 'Video uploaded to TikTok inbox successfully',
       publish_id: publishId,
       upload_url: uploadUrl,
-      status: statusResponse.data.data?.status || 'uploaded',
+      status: statusResponse.data.data?.status || 'posted',
       video_size: videoSize,
       upload_status: uploadResult.status,
       status_check: statusResponse.data,
-      api_used: 'TikTok Content Posting API - Complete upload flow'
+      api_used: 'TikTok Content Posting API - Inbox Upload (video.upload scope)',
+      post_type: 'INBOX_UPLOAD'
     });
     
   } catch (error) {
     console.error('TikTok upload error:', error);
+    
+    // Log the actual TikTok error response if available
+    if (error.response && error.response.data) {
+      console.log('TikTok Error Response:', error.response.data);
+    }
+    
     res.status(500).json({ 
       error: 'upload_failed', 
-      message: 'Failed to upload video to TikTok' 
+      message: 'Failed to upload video to TikTok',
+      details: error.response?.data || error.message
     });
   }
 });

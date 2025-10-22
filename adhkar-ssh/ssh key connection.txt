@@ -9,4 +9,5 @@ copy:
 scp -i "C:\Users\Yazan\Desktop\adkhar-app\adhkar-ssh\ssh-key-2025-07-30.key" -r "C:\Users\Yazan\Desktop\adkhar-app-backend\backend.zip" opc@155.248.217.85:~/
 
 scp -i "C:\Users\Yazan\Desktop\adkhar-app\adhkar-ssh\ssh-key-2025-07-30.key" -r "C:\Users\Yazan\Desktop\adkhar-app\server.js" opc@155.248.217.85:~/
-جالندھر
+
+error changing layout typeerror: this.layoutDb.close is not a function(it is undefined)

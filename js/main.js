@@ -10400,7 +10400,8 @@ function updatePrayerSettingsDropdowns() {
             { value: '17', text: 'كيميناج (إندونيسيا)' },
             { value: '18', text: 'جاكيم (ماليزيا)' },
             { value: '19', text: 'تونس' },
-            { value: '20', text: 'الجزائر' }
+            { value: '20', text: 'الجزائر' },
+            { value: '23', text: 'وزارة الأوقاف والشؤون والمقدسات الإسلامية، الأردن' }
         ],
         en: [
             { value: '1', text: 'Muslim World League' },
@@ -10422,7 +10423,8 @@ function updatePrayerSettingsDropdowns() {
             { value: '17', text: 'KEMENAG (Indonesia)' },
             { value: '18', text: 'JAKIM (Malaysia)' },
             { value: '19', text: 'Tunisia' },
-            { value: '20', text: 'Algeria' }
+            { value: '20', text: 'Algeria' },
+            { value: '23', text: 'Ministry of Awqaf, Islamic Affairs and Holy Places, Jordan' }
         ]
     };
     
