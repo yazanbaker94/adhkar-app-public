@@ -1960,57 +1960,94 @@ app.post('/api/tiktok/simple', async (req, res) => {
   }
 });
 
-// TikTok video upload endpoint with increased body size limit
-app.post('/api/tiktok/upload', express.json({ limit: '50mb' }), async (req, res) => {
+// TikTok Creator Info endpoint
+app.post('/api/tiktok/creator-info', async (req, res) => {
   try {
-    // Add CORS headers
-    const origin = req.headers.origin;
-    const allowedOrigins = [
-      'https://sakinahtime.com',
-      'https://www.sakinahtime.com',
-      'http://localhost:3000',
-      'http://localhost:8000',
-      'http://127.0.0.1:3000'
-    ];
+    const { access_token } = req.body;
     
-    if (allowedOrigins.includes(origin)) {
-      res.header('Access-Control-Allow-Origin', origin);
-    } else {
-      res.header('Access-Control-Allow-Origin', '*');
-    }
-    
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-    res.header('Access-Control-Allow-Credentials', 'true');
-    
-    const { access_token, video_data, caption, privacy_level } = req.body;
-    
-    console.log('TikTok video upload request:', { 
-      has_access_token: !!access_token,
-      has_video_data: !!video_data,
-      caption: caption,
-      privacy_level: privacy_level
+    const response = await axios.post('https://open.tiktokapis.com/v2/post/publish/creator_info/query/', {}, {
+      headers: {
+        'Authorization': `Bearer ${access_token}`,
+        'Content-Type': 'application/json; charset=UTF-8'
+      }
     });
     
-    // Step 1: Initialize INBOX UPLOAD using TikTok Content Posting API (sandbox compatible)
-    const initUrl = 'https://open.tiktokapis.com/v2/post/publish/inbox/video/init/';
+    if (response.data.error.code === 'ok') {
+      res.json(response.data.data);
+    } else {
+      res.status(400).json({ error: response.data.error.message });
+    }
+  } catch (error) {
+    console.error('TikTok creator info error:', error.response?.data || error.message);
+    res.status(500).json({ error: 'Failed to get creator info' });
+  }
+});
+
+// TikTok Initialize Upload endpoint
+app.post('/api/tiktok/init-upload', async (req, res) => {
+  try {
+    const { access_token, title, privacy_level, video_size } = req.body;
     
-    // Convert base64 to buffer to get accurate size
-    const videoBuffer = Buffer.from(video_data, 'base64');
-    const actualVideoSize = videoBuffer.length;
+    const chunkSize = 10000000; // 10MB chunks
+    const totalChunks = Math.ceil(video_size / chunkSize);
     
-    const initData = {
+    const response = await axios.post('https://open.tiktokapis.com/v2/post/publish/video/init/', {
+      post_info: {
+        title: title,
+        privacy_level: privacy_level,
+        disable_duet: false,
+        disable_comment: false,
+        disable_stitch: false,
+        video_cover_timestamp_ms: 1000
+      },
       source_info: {
         source: 'FILE_UPLOAD',
-        video_size: actualVideoSize,
-        chunk_size: actualVideoSize, // Use full video size for single chunk
-        total_chunk_count: 1
+        video_size: video_size,
+        chunk_size: chunkSize,
+        total_chunk_count: totalChunks
       }
-    };
-
-    console.log('Calling TikTok INBOX UPLOAD API...');
-    const uploadResponse = await axios.post(initUrl, initData, {
+    }, {
       headers: {
+        'Authorization': `Bearer ${access_token}`,
+        'Content-Type': 'application/json; charset=UTF-8'
+      }
+    });
+    
+    if (response.data.error.code === 'ok') {
+      res.json(response.data.data);
+    } else {
+      res.status(400).json({ error: response.data.error.message });
+    }
+  } catch (error) {
+    console.error('TikTok init upload error:', error.response?.data || error.message);
+    res.status(500).json({ error: 'Failed to initialize upload' });
+  }
+});
+
+// TikTok Check Status endpoint
+app.post('/api/tiktok/check-status', async (req, res) => {
+  try {
+    const { access_token, publish_id } = req.body;
+    
+    const response = await axios.post('https://open.tiktokapis.com/v2/post/publish/status/fetch/', {
+      publish_id: publish_id
+    }, {
+      headers: {
+        'Authorization': `Bearer ${access_token}`,
+        'Content-Type': 'application/json; charset=UTF-8'
+      }
+    });
+    
+    if (response.data.error.code === 'ok') {
+      res.json({ status: response.data.data.status });
+    } else {
+      res.status(400).json({ error: response.data.error.message });
+    }
+  } catch (error) {
+    console.error('TikTok check status error:', error.response?.data || error.message);
+    res.status(500).json({ error: 'Failed to check status' });
+  }
+});
         'Authorization': `Bearer ${access_token}`,
         'Content-Type': 'application/json; charset=UTF-8',
       }

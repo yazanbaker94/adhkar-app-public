@@ -580,72 +580,58 @@
             }
         }
 
-        // Query Creator Info
+        // Query Creator Info via proxy
         async function queryCreatorInfo(accessToken) {
             try {
-                const response = await fetch('https://open.tiktokapis.com/v2/post/publish/creator_info/query/', {
+                const response = await fetch('https://api.sakinahtime.com/api/tiktok/creator-info', {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${accessToken}`,
-                        'Content-Type': 'application/json; charset=UTF-8'
-                    }
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ access_token: accessToken })
                 });
 
                 const data = await response.json();
                 
-                if (response.ok && data.error.code === 'ok') {
-                    return { success: true, ...data.data };
+                if (response.ok) {
+                    return { success: true, ...data };
                 } else {
-                    return { success: false, error: data.error.message || 'Failed to query creator info' };
+                    return { success: false, error: data.error || 'Failed to query creator info' };
                 }
             } catch (error) {
                 return { success: false, error: error.message };
             }
         }
 
-        // Initialize Video Upload
+        // Initialize Video Upload via proxy
         async function initializeVideoUpload(accessToken, title, privacyLevel, videoSize) {
             try {
-                const chunkSize = 10000000; // 10MB chunks
-                const totalChunks = Math.ceil(videoSize / chunkSize);
-
-                const response = await fetch('https://open.tiktokapis.com/v2/post/publish/video/init/', {
+                const response = await fetch('https://api.sakinahtime.com/api/tiktok/init-upload', {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${accessToken}`,
-                        'Content-Type': 'application/json; charset=UTF-8'
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        post_info: {
-                            title: title || 'Islamic content from SakinahTime',
-                            privacy_level: privacyLevel,
-                            disable_duet: false,
-                            disable_comment: false,
-                            disable_stitch: false,
-                            video_cover_timestamp_ms: 1000
-                        },
-                        source_info: {
-                            source: 'FILE_UPLOAD',
-                            video_size: videoSize,
-                            chunk_size: chunkSize,
-                            total_chunk_count: totalChunks
-                        }
+                        access_token: accessToken,
+                        title: title || 'Islamic content from SakinahTime',
+                        privacy_level: privacyLevel,
+                        video_size: videoSize
                     })
                 });
 
                 const data = await response.json();
                 
-                if (response.ok && data.error.code === 'ok') {
-                    return { success: true, ...data.data };
+                if (response.ok) {
+                    return { success: true, ...data };
                 } else {
-                    return { success: false, error: data.error.message || 'Failed to initialize upload' };
+                    return { success: false, error: data.error || 'Failed to initialize upload' };
                 }
             } catch (error) {
                 return { success: false, error: error.message };
             }
         }
 
-        // Upload Video File
+        // Upload Video File directly to TikTok
         async function uploadVideoFile(uploadUrl, videoFile) {
             try {
                 const response = await fetch(uploadUrl, {
@@ -667,26 +653,26 @@
             }
         }
 
-        // Check Publish Status
+        // Check Publish Status via proxy
         async function checkPublishStatus(accessToken, publishId) {
             try {
-                const response = await fetch('https://open.tiktokapis.com/v2/post/publish/status/fetch/', {
+                const response = await fetch('https://api.sakinahtime.com/api/tiktok/check-status', {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${accessToken}`,
-                        'Content-Type': 'application/json; charset=UTF-8'
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
+                        access_token: accessToken,
                         publish_id: publishId
                     })
                 });
 
                 const data = await response.json();
                 
-                if (response.ok && data.error.code === 'ok') {
-                    return { success: true, status: data.data.status };
+                if (response.ok) {
+                    return { success: true, ...data };
                 } else {
-                    return { success: false, error: data.error.message || 'Failed to check status' };
+                    return { success: false, error: data.error || 'Failed to check status' };
                 }
             } catch (error) {
                 return { success: false, error: error.message };
