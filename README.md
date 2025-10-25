@@ -1,6 +1,7 @@
 <p align="center">
   <img src="icon2.png" alt="SakinahTime Logo" width="150"/>
 </p>
+<h1 align="center">SakinahTime.com</h1>
 
 <h1 align="center">SakinahTime - Your Daily Islamic Companion</h1>
 
